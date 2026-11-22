@@ -692,6 +692,8 @@ function applyState(message) {
   el('active-leaks').textContent = data.active_leaks;
 
   el('game-over-banner').hidden = !data.sunk;
+  el('victory-banner').hidden = !data.won;
+  el('cargo-sunk').textContent = `${data.cargo_sunk} / ${data.cargo_total}`;
 
   const invulnBtn = el('invulnerable-btn');
   invulnBtn.textContent = `Invulnerable: ${data.invulnerable ? 'ON' : 'OFF'}`;
@@ -1845,6 +1847,7 @@ function resetGame() {
 
 el('reset-btn').addEventListener('click', resetGame);
 el('reset-btn-banner').addEventListener('click', resetGame);
+el('reset-btn-victory').addEventListener('click', resetGame);
 
 el('invulnerable-btn').addEventListener('click', (event) => {
   const currentlyOn = event.currentTarget.dataset.state === 'on';

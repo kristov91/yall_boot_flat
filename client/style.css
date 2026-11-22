@@ -20,6 +20,18 @@ body {
   border: 2px solid #fff;
 }
 
+#victory-banner {
+  background: #1b5e20;
+  color: #fff;
+  font-size: 24px;
+  font-weight: bold;
+  text-align: center;
+  padding: 16px;
+  margin-bottom: 16px;
+  border: 2px solid #fff;
+}
+
+#victory-banner button,
 #game-over-banner button {
   margin-top: 12px;
   font-size: 16px;
@@ -173,6 +185,7 @@ body.mobile-fullscreen {
 }
 
 body.mobile-fullscreen h1,
+body.mobile-fullscreen #victory-banner,
 body.mobile-fullscreen #game-over-banner {
   display: none;
 }

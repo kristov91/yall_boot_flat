@@ -77,6 +77,15 @@ const DT := 1.0 / 60.0
 @export var max_dive_rate := 5.0 # depth-units/sec at full dive planes
 @export var max_depth := 200.0
 
+@export_group("Dev")
+## Off for a real round: every debug safety toggle below (invulnerable,
+## ignore overheat, unlimited supplies, ignore game over) starts OFF, so the
+## sub can actually be damaged and lost. On restores the old playtest
+## defaults with all four ON. Also switched on by launching the server with
+## the user arg `--dev` (e.g. `godot --path . -- --dev`). Only read once, at
+## startup - the debug panel buttons still flip each toggle live either way.
+@export var dev_mode := false
+
 @export_group("Convoys")
 ## How many convoys spawn on reset() - each one gets its own random spawn
 ## point/course and its own random mix of escorts/cargo within the ranges
@@ -304,6 +313,11 @@ var rudder: float = 0.0 # -1..1
 var dive_planes: float = 0.0 # -1..1
 var depth: float = 0.0
 var sunk: bool = false
+## The round's win condition: set once every cargo ship in every convoy has
+## been torpedoed and finished sinking (destroyers are optional - fight them
+## or slip past them). Freezes the sim exactly like sunk does. See
+## _check_victory().
+var won: bool = false
 
 # Life support: O2 is the real "health" now - it hits a ceiling of
 # (100 - flooding), so a fully flooded sub (100%) caps O2 at 0 outright, on
@@ -364,7 +378,9 @@ var electric_motor_active: bool = false
 var power_draw: float = 0.0 # net battery amperage this tick - positive drains, negative charges
 
 # Testing convenience only - deliberately NOT reset by reset(), so it stays
-# set across repeated playtests instead of needing to be re-toggled.
+# set across repeated playtests instead of needing to be re-toggled. The
+# starting value of this and the three toggles below comes from dev_mode
+# (see _apply_dev_mode()); the `true` here is just the dev-mode value.
 var invulnerable: bool = true
 var debug_show_enemy: bool = false
 # When true (the default, for the same reason as invulnerable above), the
@@ -421,7 +437,17 @@ var players: Dictionary = {} # player_id: int -> {compartment, equipped_tool}
 var tools: Dictionary = {}
 
 func _ready() -> void:
+	_apply_dev_mode()
 	reset()
+
+func _apply_dev_mode() -> void:
+	if "--dev" in OS.get_cmdline_user_args():
+		dev_mode = true
+	invulnerable = dev_mode
+	debug_ignore_overheat_effects = dev_mode
+	debug_unlimited_supplies = dev_mode
+	debug_ignore_game_over = dev_mode
+	print("Dev Mode: %s" % ("ON (debug safety toggles start on)" if dev_mode else "OFF"))
 
 ## Restores the simulation to its starting conditions without disconnecting
 ## anyone - lets a session be replayed from the client without restarting
@@ -436,6 +462,7 @@ func reset() -> void:
 	dive_planes = 0.0
 	depth = 0.0
 	sunk = false
+	won = false
 
 	o2 = 100.0
 	flooding = 0.0
@@ -624,7 +651,7 @@ func apply_input(player_id: int, action: String, data: Dictionary) -> void:
 
 func step() -> void:
 	tick += 1
-	if sunk:
+	if sunk or won:
 		return
 
 	_step_engine_room()
@@ -661,6 +688,21 @@ func step() -> void:
 	_step_torpedoes()
 	_step_welding()
 	_step_flooding()
+	_check_victory()
+
+func _cargo_ships() -> Array:
+	return ships.filter(func(s): return s.type == "cargo")
+
+## Win once every cargo ship is fully sunk (alive goes false only after its
+## sink animation finishes - see _step_sinking_ships()), so the crew gets to
+## watch the last one go down through the periscope before the round ends.
+## Losing on the same tick (sunk) takes priority.
+func _check_victory() -> void:
+	if sunk:
+		return
+	var cargo := _cargo_ships()
+	if cargo.size() > 0 and cargo.all(func(s): return not s.alive):
+		won = true
 
 func _step_engine_room() -> void:
 	var wear_rate := engine_tune_rate if engine_tuning_active else -engine_drift_rate
@@ -904,6 +946,10 @@ func get_state() -> Dictionary:
 			"weld_progress": l.weld_progress,
 		}),
 		"sunk": sunk,
+		"won": won,
+		"cargo_total": _cargo_ships().size(),
+		"cargo_sunk": _cargo_ships().filter(func(s): return not s.alive).size(),
+		"dev_mode": dev_mode,
 		"invulnerable": invulnerable,
 		"ignore_overheat_effects": debug_ignore_overheat_effects,
 		"unlimited_supplies": debug_unlimited_supplies,
