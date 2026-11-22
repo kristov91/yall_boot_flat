@@ -37,7 +37,7 @@ Replaces the stopgap "sink every cargo ship = VICTORY" round (added 2026-11-22).
 
 ## Step 4: Leaderboard (built 2026-11-22)
 
-- `server/leaderboard.gd`: top `leaderboard_size` (10) in `user://leaderboard.json`, which on Windows is `%APPDATA%\Godotpp_userdata\YallBootFlat\leaderboard.json`. Not in git.
+- `server/leaderboard.gd`: top `leaderboard_size` (10) in `user://leaderboard.json`, which on Windows is `%APPDATA%\Godot\app_userdata\YallBootFlat\leaderboard.json`. Not in git.
 - Entry: name (default "Crew"), score, cargo sunk, destroyers sunk, damage penalty, duration, date. Ties go to the older entry.
 - The board is sent in state only once the patrol is over (docked or sunk). `best_score` is sent always.
 
