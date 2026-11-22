@@ -128,6 +128,16 @@ const DT := 1.0 / 60.0
 ## find. Every other convoy still spawns fully randomly.
 @export var convoy_guaranteed_close_distance := 200.0
 @export var convoy_formation_spacing := 40.0
+## Keeps the sea stocked: whenever fewer than ship_population_min ships are
+## afloat (alive and not already sinking), whole new convoys spawn until it's
+## back at the minimum, each trimmed so the total never exceeds
+## ship_population_max. Respawned convoys appear around the sub's CURRENT
+## position, at least convoy_respawn_min_distance away (up to convoy_spawn_
+## max_distance) so they never pop in on top of the boat. Set the min to 0 to
+## turn respawn off (that also brings back the old sink-all-cargo VICTORY).
+@export var ship_population_min := 4
+@export var ship_population_max := 8
+@export var convoy_respawn_min_distance := 800.0
 ## Cargo ships never fight back - they run in a straight line on their own
 ## course, ignoring the sub entirely, right up until their convoy's escort
 ## detects it (see the Detection group below), at which point they turn
@@ -345,6 +355,12 @@ var sunk: bool = false
 ## or slip past them). Freezes the sim exactly like sunk does. See
 ## _check_victory().
 var won: bool = false
+## Running totals for the whole patrol - fully sunk ships are removed from
+## `ships`, so these are the only record of them (see _step_sinking_ships()).
+var cargo_sunk: int = 0
+var destroyers_sunk: int = 0
+var next_ship_id: int = 0
+var next_convoy_id: int = 0
 
 # Life support: O2 is the real "health" now - it hits a ceiling of
 # (100 - flooding), so a fully flooded sub (100%) caps O2 at 0 outright, on
@@ -496,6 +512,8 @@ func reset() -> void:
 	depth = 0.0
 	sunk = false
 	won = false
+	cargo_sunk = 0
+	destroyers_sunk = 0
 
 	o2 = 100.0
 	flooding = 0.0
@@ -730,6 +748,7 @@ func step() -> void:
 
 	_step_ships()
 	_step_sinking_ships()
+	_step_convoy_respawn()
 	_step_passive_contacts()
 	_step_torpedoes()
 	_step_welding()
@@ -762,10 +781,11 @@ func _cargo_ships() -> Array:
 ## watch the last one go down through the periscope before the round ends.
 ## Losing on the same tick (sunk) takes priority.
 func _check_victory() -> void:
-	if sunk:
+	if sunk or ship_population_min > 0:
 		return
-	var cargo := _cargo_ships()
-	if cargo.size() > 0 and cargo.all(func(s): return not s.alive):
+	# Fully sunk ships are pruned, so "every cargo ship sunk" means none left
+	# in the world at all after at least one has gone down.
+	if cargo_sunk > 0 and _cargo_ships().is_empty():
 		won = true
 
 func _step_engine_room() -> void:
@@ -1017,8 +1037,10 @@ func get_state() -> Dictionary:
 		}),
 		"sunk": sunk,
 		"won": won,
-		"cargo_total": _cargo_ships().size(),
-		"cargo_sunk": _cargo_ships().filter(func(s): return not s.alive).size(),
+		"cargo_total": cargo_sunk + _cargo_ships().size(),
+		"cargo_sunk": cargo_sunk,
+		"destroyers_sunk": destroyers_sunk,
+		"ships_afloat": _ship_population(),
 		"dev_mode": dev_mode,
 		"invulnerable": invulnerable,
 		"ignore_overheat_effects": debug_ignore_overheat_effects,
@@ -1236,31 +1258,61 @@ func _gear_multiplier(g: String) -> float:
 ## convoy start in a simple line-abreast formation, spaced perpendicular to
 ## their shared course. Convoy 0 always spawns at convoy_guaranteed_close_
 ## distance (still a random bearing) rather than the full random range, so
-## there's always at least one nearby to find early on.
+## there's always at least one nearby to find early on. Then tops the sea up
+## to ship_population_min, capped at ship_population_max.
 func _spawn_convoys() -> void:
 	ships = []
 	convoys = []
-	var ship_seq := 0
-	for convoy_id in convoy_count:
-		convoys.append({"id": convoy_id, "alert": false})
-		var spawn_distance := convoy_guaranteed_close_distance if convoy_id == 0 else randf_range(convoy_spawn_min_distance, convoy_spawn_max_distance)
-		var spawn_angle := randf() * TAU
-		var convoy_center := Vector2(spawn_distance, 0.0).rotated(spawn_angle)
-		var course_heading := randf() * 360.0
-		var perp := Vector2.RIGHT.rotated(deg_to_rad(course_heading + 90.0))
+	next_ship_id = 0
+	next_convoy_id = 0
+	for i in convoy_count:
+		var spawn_distance := convoy_guaranteed_close_distance if i == 0 else randf_range(convoy_spawn_min_distance, convoy_spawn_max_distance)
+		_spawn_convoy(Vector2(spawn_distance, 0.0).rotated(randf() * TAU), ship_population_max - _ship_population())
+	_step_convoy_respawn()
 
-		var destroyer_count := randi_range(convoy_destroyers_min, convoy_destroyers_max)
-		var cargo_count := randi_range(convoy_cargo_min, convoy_cargo_max)
-		var total_count := destroyer_count + cargo_count
-		var slot := 0
-		for i in destroyer_count:
-			ships.append(_make_ship(ship_seq, convoy_id, "destroyer", convoy_center, course_heading, perp, slot, total_count))
-			ship_seq += 1
-			slot += 1
-		for i in cargo_count:
-			ships.append(_make_ship(ship_seq, convoy_id, "cargo", convoy_center, course_heading, perp, slot, total_count))
-			ship_seq += 1
-			slot += 1
+## Ships still in play - alive and not already going down.
+func _ship_population() -> int:
+	return ships.filter(func(s): return s.alive and not s.sinking).size()
+
+## Tops the sea back up to ship_population_min (see the Convoys export
+## group). Called every tick and once more at the end of _spawn_convoys().
+func _step_convoy_respawn() -> void:
+	if ship_population_min <= 0:
+		return
+	var population := _ship_population()
+	var max_population := maxi(ship_population_max, ship_population_min)
+	while population < ship_population_min:
+		var distance := randf_range(convoy_respawn_min_distance, maxf(convoy_respawn_min_distance, convoy_spawn_max_distance))
+		var added := _spawn_convoy(position + Vector2(distance, 0.0).rotated(randf() * TAU), max_population - population)
+		if added <= 0:
+			break
+		population += added
+
+## One convoy centered at convoy_center on a random course, with a random
+## destroyer/cargo mix trimmed to at most max_ships (cargo kept first so a
+## trimmed convoy is still worth hunting). Ships start line-abreast,
+## spaced perpendicular to the course. Returns how many ships it added.
+func _spawn_convoy(convoy_center: Vector2, max_ships: int) -> int:
+	var cargo_count := mini(randi_range(convoy_cargo_min, convoy_cargo_max), max_ships)
+	var destroyer_count := mini(randi_range(convoy_destroyers_min, convoy_destroyers_max), max_ships - cargo_count)
+	var total_count := destroyer_count + cargo_count
+	if total_count <= 0:
+		return 0
+	var convoy_id := next_convoy_id
+	next_convoy_id += 1
+	convoys.append({"id": convoy_id, "alert": false})
+	var course_heading := randf() * 360.0
+	var perp := Vector2.RIGHT.rotated(deg_to_rad(course_heading + 90.0))
+	var slot := 0
+	for i in destroyer_count:
+		ships.append(_make_ship(next_ship_id, convoy_id, "destroyer", convoy_center, course_heading, perp, slot, total_count))
+		next_ship_id += 1
+		slot += 1
+	for i in cargo_count:
+		ships.append(_make_ship(next_ship_id, convoy_id, "cargo", convoy_center, course_heading, perp, slot, total_count))
+		next_ship_id += 1
+		slot += 1
+	return total_count
 
 func _make_ship(id: int, convoy_id: int, type: String, convoy_center: Vector2, course_heading: float, perp: Vector2, slot: int, total_count: int) -> Dictionary:
 	var offset := perp * convoy_formation_spacing * (float(slot) - float(total_count - 1) / 2.0)
@@ -1389,6 +1441,17 @@ func _step_sinking_ships() -> void:
 		if ship.sink_progress >= 1.0:
 			ship.alive = false
 			ship.sinking = false
+			if ship.type == "cargo":
+				cargo_sunk += 1
+			else:
+				destroyers_sunk += 1
+	# Fully sunk ships leave the world for good (the totals above remember
+	# them), along with any convoy that has no ships left.
+	ships = ships.filter(func(s): return s.alive)
+	var live_convoys := {}
+	for ship in ships:
+		live_convoys[ship.convoy_id] = true
+	convoys = convoys.filter(func(c): return live_convoys.has(c.id))
 
 # Ambient background traffic - just walks a fixed circle around the map
 # center forever. No heading/turn-rate model like the convoy ships above;

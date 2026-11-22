@@ -693,7 +693,7 @@ function applyState(message) {
 
   el('game-over-banner').hidden = !data.sunk;
   el('victory-banner').hidden = !data.won;
-  el('cargo-sunk').textContent = `${data.cargo_sunk} / ${data.cargo_total}`;
+  el('cargo-sunk').textContent = `${data.cargo_sunk} cargo, ${data.destroyers_sunk} destroyer`;
 
   const invulnBtn = el('invulnerable-btn');
   invulnBtn.textContent = `Invulnerable: ${data.invulnerable ? 'ON' : 'OFF'}`;
