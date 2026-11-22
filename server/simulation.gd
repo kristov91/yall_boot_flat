@@ -165,6 +165,19 @@ const DT := 1.0 / 60.0
 ## own sinking/sink_progress fields, which the periscope view animates).
 @export var ship_sink_duration := 8.0
 
+@export_group("Port")
+## Home port - where the patrol starts and where it has to end for the crew
+## to bank its score (see _step_port()). Docking means being inside
+## port_radius, at or above surfaced_max_depth, and at or under
+## port_dock_max_speed (the sub's own 0..1 speed fraction) for
+## port_dock_seconds in a row. The trigger only arms once the sub has been
+## at least port_leave_distance away, so a patrol can't end at tick 1.
+@export var port_position := Vector2.ZERO
+@export var port_radius := 60.0
+@export var port_leave_distance := 150.0
+@export var port_dock_seconds := 3.0
+@export var port_dock_max_speed := 0.05
+
 @export_group("Detection")
 ## The sub's own three-tier detectability model - both what lets a
 ## destroyer notice it (_ship_detects_player() below) and what the Sonar
@@ -361,6 +374,12 @@ var cargo_sunk: int = 0
 var destroyers_sunk: int = 0
 var next_ship_id: int = 0
 var next_convoy_id: int = 0
+## Port return state (see the Port export group / _step_port()). returned is
+## the real end of a patrol: the score is banked and the sim freezes like it
+## does on sunk/won.
+var left_port: bool = false
+var dock_timer: float = 0.0
+var returned: bool = false
 
 # Life support: O2 is the real "health" now - it hits a ceiling of
 # (100 - flooding), so a fully flooded sub (100%) caps O2 at 0 outright, on
@@ -514,6 +533,9 @@ func reset() -> void:
 	won = false
 	cargo_sunk = 0
 	destroyers_sunk = 0
+	left_port = false
+	dock_timer = 0.0
+	returned = false
 
 	o2 = 100.0
 	flooding = 0.0
@@ -708,7 +730,7 @@ func apply_input(player_id: int, action: String, data: Dictionary) -> void:
 
 func step() -> void:
 	tick += 1
-	if sunk or won:
+	if sunk or won or returned:
 		return
 
 	_step_engine_room()
@@ -753,6 +775,7 @@ func step() -> void:
 	_step_torpedoes()
 	_step_welding()
 	_step_flooding()
+	_step_port()
 	_check_victory()
 
 ## FLOOD lets sea water into the ballast tanks; BLOW forces it out with
@@ -772,6 +795,27 @@ func _step_ballast() -> void:
 func _step_buoyancy() -> void:
 	var ballast_span := maxf(ballast_neutral, 100.0 - ballast_neutral)
 	buoyancy = clampf((ballast_neutral - ballast) / ballast_span, -1.0, 1.0)
+
+func _distance_to_port() -> float:
+	return position.distance_to(port_position)
+
+## Arms once the sub has really left port, then counts up dock_timer while
+## it sits surfaced and (nearly) stopped inside port_radius - any of those
+## breaking resets the count. Sinking on the same tick wins (sunk is checked
+## first, and a sunk sub never returns).
+func _step_port() -> void:
+	if sunk:
+		return
+	var distance := _distance_to_port()
+	if not left_port:
+		left_port = distance >= port_leave_distance
+		return
+	if distance <= port_radius and depth <= surfaced_max_depth and absf(speed) <= port_dock_max_speed:
+		dock_timer += DT
+		if dock_timer >= port_dock_seconds:
+			returned = true
+	else:
+		dock_timer = 0.0
 
 func _cargo_ships() -> Array:
 	return ships.filter(func(s): return s.type == "cargo")
@@ -1007,6 +1051,8 @@ func get_state() -> Dictionary:
 		# there's no debug gate on watching a torpedo you launched yourself
 		# travel across the map.
 		"torpedoes": torpedoes.map(func(t): return {"x": t.position.x, "y": t.position.y, "heading": t.heading}),
+		# Home port is charted, not a contact - always shown.
+		"port": {"x": port_position.x, "y": port_position.y, "radius": port_radius},
 	}
 	if debug_show_enemy:
 		map_data["ships"] = ships.filter(func(s): return s.alive).map(func(s): return {
@@ -1041,6 +1087,10 @@ func get_state() -> Dictionary:
 		"cargo_sunk": cargo_sunk,
 		"destroyers_sunk": destroyers_sunk,
 		"ships_afloat": _ship_population(),
+		"returned": returned,
+		"port_distance": _distance_to_port(),
+		"left_port": left_port,
+		"dock_progress": clampf(dock_timer / maxf(port_dock_seconds, 0.001), 0.0, 1.0),
 		"dev_mode": dev_mode,
 		"invulnerable": invulnerable,
 		"ignore_overheat_effects": debug_ignore_overheat_effects,

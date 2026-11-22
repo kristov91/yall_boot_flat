@@ -19,6 +19,12 @@
   <div><button id="reset-btn-victory">Play Again</button></div>
 </div>
 
+<div id="returned-banner" hidden>
+  PATROL COMPLETE - BACK IN PORT
+  <div id="returned-summary"></div>
+  <div><button id="reset-btn-returned">Play Again</button></div>
+</div>
+
 <div id="connect-bar">
   <label>Server: ws://<input id="server-address" value="localhost:9000"></label>
   <button id="connect-btn">Connect</button>
@@ -42,6 +48,7 @@
     <tr><td>Heading:</td><td id="heading">-</td></tr>
     <tr><td>Depth:</td><td id="depth">-</td></tr>
     <tr><td>Ships Sunk:</td><td id="cargo-sunk">-</td></tr>
+    <tr><td>Port:</td><td id="port-status">-</td></tr>
     <tr><td>O2:</td><td id="o2">-</td></tr>
     <tr><td>Flooding:</td><td id="flooding">-</td></tr>
     <tr><td>Active Leaks:</td><td id="active-leaks">-</td></tr>

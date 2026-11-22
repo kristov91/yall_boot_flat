@@ -943,6 +943,24 @@ const RoomRenderer = (() => {
       }
     }
 
+    // Home port - a dashed ring at its docking radius, clipped to the scope
+    // box and drawn under the ships so it reads as charted coastline, not a
+    // contact. Always shown (no debug gate): the crew knows where home is.
+    if (map.port) {
+      const portOffset = worldToScreenOffset(map.port.x, map.port.y, originX, originY, scale);
+      ctx.save();
+      ctx.beginPath();
+      ctx.rect(cx - halfW, cy - halfH, halfW * 2, halfH * 2);
+      ctx.clip();
+      ctx.strokeStyle = '#4fc3f7';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([6, 4]);
+      ctx.beginPath();
+      ctx.arc(cx + portOffset.x, cy + portOffset.y, Math.max(3, map.port.radius * scale), 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     // Own ship - plotted at its actual position in the fixed frame (and
     // skipped once it's moved outside the depicted range, same as any
     // other contact), oriented to heading. The triangle is authored

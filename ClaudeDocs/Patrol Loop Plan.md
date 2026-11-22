@@ -19,10 +19,11 @@ Replaces the stopgap "sink every cargo ship = VICTORY" round (added 2026-11-22).
 - Fully sunk ships are removed from the world, and running totals `cargo_sunk` / `destroyers_sunk` are kept instead.
 - Setting `ship_population_min = 0` turns respawn off and brings back the old sink-all-cargo VICTORY, for testing until port return exists.
 
-## Step 2: Port location and return trigger
+## Step 2: Port location and return trigger (built 2026-11-22, assumes question D = one port at start)
 
-- One fixed home port at world origin (0,0), where the sub already starts. Exported `port_position` and `port_radius` (e.g. 60 world units).
-- Shown on the Navigation map as a marker and on the periscope as a landmark contact.
+- One fixed home port at world origin (0,0), where the sub already starts. Exports in the Port group: `port_position`, `port_radius` (60), `port_leave_distance` (150), `port_dock_seconds` (3), `port_dock_max_speed` (0.05).
+- Shown on both Navigation maps as a dashed blue ring at the docking radius. Status table shows distance to port and docking %. (Periscope landmark: not yet.)
+- On docking, the sim freezes and clients show PATROL COMPLETE with the sunk counts and Play Again. No score yet (step 3).
 - Return trigger: inside `port_radius`, surfaced (depth <= `surfaced_max_depth`), and nearly stopped, held for a few seconds (`port_dock_seconds`). That stops a drive-by "touch and go" and makes docking a crew task.
 - The trigger is armed only after the sub has first left port (been outside, say, 2x the radius), so the round can't end at tick 1.
 - Optional later: a client "Return to port" bearing/range readout on the nav table.

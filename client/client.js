@@ -694,6 +694,12 @@ function applyState(message) {
   el('game-over-banner').hidden = !data.sunk;
   el('victory-banner').hidden = !data.won;
   el('cargo-sunk').textContent = `${data.cargo_sunk} cargo, ${data.destroyers_sunk} destroyer`;
+  el('returned-banner').hidden = !data.returned;
+  el('returned-summary').textContent = `Sunk ${data.cargo_sunk} cargo and ${data.destroyers_sunk} destroyers`;
+  let portStatus = `${Math.round(data.port_distance)} u`;
+  if (!data.left_port) portStatus += ' (in harbor)';
+  else if (data.dock_progress > 0) portStatus += ` - docking ${Math.round(data.dock_progress * 100)}%`;
+  el('port-status').textContent = portStatus;
 
   const invulnBtn = el('invulnerable-btn');
   invulnBtn.textContent = `Invulnerable: ${data.invulnerable ? 'ON' : 'OFF'}`;
@@ -1423,6 +1429,17 @@ function updateMapUI(map) {
     ctx.stroke();
   }
 
+  if (map.port) {
+    // Home port: a dashed ring at its docking radius, drawn under everything.
+    ctx.save();
+    ctx.strokeStyle = '#4fc3f7';
+    ctx.setLineDash([4, 4]);
+    ctx.beginPath();
+    ctx.arc(centerX + (map.port.x - map.position.x) * MAP_SCALE, centerY + (map.port.y - map.position.y) * MAP_SCALE, map.port.radius * MAP_SCALE, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.restore();
+  }
+
   drawShipMarker(ctx, centerX, centerY, map.heading, '#4caf50');
 
   (map.ships || []).forEach((ship) => {
@@ -1848,6 +1865,7 @@ function resetGame() {
 el('reset-btn').addEventListener('click', resetGame);
 el('reset-btn-banner').addEventListener('click', resetGame);
 el('reset-btn-victory').addEventListener('click', resetGame);
+el('reset-btn-returned').addEventListener('click', resetGame);
 
 el('invulnerable-btn').addEventListener('click', (event) => {
   const currentlyOn = event.currentTarget.dataset.state === 'on';
