@@ -11,6 +11,8 @@
 
 <div id="game-over-banner" hidden>
   SUBMARINE LOST
+  <div class="banner-detail">Patrol lost with all hands - nothing banked.</div>
+  <table class="leaderboard" id="leaderboard-lost"></table>
   <div><button id="reset-btn-banner">Reset Game</button></div>
 </div>
 
@@ -21,7 +23,13 @@
 
 <div id="returned-banner" hidden>
   PATROL COMPLETE - BACK IN PORT
-  <div id="returned-summary"></div>
+  <div class="banner-detail" id="returned-summary"></div>
+  <div id="new-high-score" hidden>NEW HIGH SCORE!</div>
+  <div class="banner-detail" id="crew-name-row">
+    <input id="crew-name-input" maxlength="20" placeholder="Crew name">
+    <button id="crew-name-btn">Save Name</button>
+  </div>
+  <table class="leaderboard" id="leaderboard-returned"></table>
   <div><button id="reset-btn-returned">Play Again</button></div>
 </div>
 
@@ -49,6 +57,7 @@
     <tr><td>Depth:</td><td id="depth">-</td></tr>
     <tr><td>Ships Sunk:</td><td id="cargo-sunk">-</td></tr>
     <tr><td>Port:</td><td id="port-status">-</td></tr>
+    <tr><td>Patrol Score:</td><td id="patrol-score">-</td></tr>
     <tr><td>O2:</td><td id="o2">-</td></tr>
     <tr><td>Flooding:</td><td id="flooding">-</td></tr>
     <tr><td>Active Leaks:</td><td id="active-leaks">-</td></tr>

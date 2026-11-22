@@ -28,31 +28,27 @@ Replaces the stopgap "sink every cargo ship = VICTORY" round (added 2026-11-22).
 - The trigger is armed only after the sub has first left port (been outside, say, 2x the radius), so the round can't end at tick 1.
 - Optional later: a client "Return to port" bearing/range readout on the nav table.
 
-## Step 3: Score formula (needs the person's pick)
+## Step 3: Score formula (built 2026-11-22, Chris's pick)
 
-Proposed default:
+- 100 points per cargo ship, 50 per destroyer (`score_per_cargo`, `score_per_destroyer`, Scoring group).
+- Mild damage penalty on return: damage = flooding (0..1) + `damage_per_leak` (0.1) per unwelded leak, capped at 1. Score x (1 - damage x `damage_penalty_max`), default 0.25, so a wreck that limps home keeps 75%.
+- Banked only by docking. Sunk = lose everything, start over.
+- Live "Patrol Score" row in the status table shows what docking right now would bank, with the best score to beat.
 
-- Cargo ship sunk: 100 points. Destroyer sunk: 150 points (riskier).
-- Return bonus multiplier based on hull state when docking, e.g. x1.0 plus up to +0.25 for low flooding/high O2.
-- Score is only banked on a safe return.
+## Step 4: Leaderboard (built 2026-11-22)
 
-## Step 4: Leaderboard storage (needs the person's pick)
+- `server/leaderboard.gd`: top `leaderboard_size` (10) in `user://leaderboard.json`, which on Windows is `%APPDATA%\Godotpp_userdata\YallBootFlat\leaderboard.json`. Not in git.
+- Entry: name (default "Crew"), score, cargo sunk, destroyers sunk, damage penalty, duration, date. Ties go to the older entry.
+- The board is sent in state only once the patrol is over (docked or sunk). `best_score` is sent always.
 
-Proposed default:
+## Step 5: End screen (built 2026-11-22)
 
-- Server-side JSON file at `user://leaderboard.json` (Godot's per-user data folder, survives restarts, not in git).
-- Each entry: crew name (typed by any player at the end screen, default "Crew"), score, cargo sunk, destroyers sunk, patrol duration, date.
-- Keep the top 10. Clients get it in the `welcome` message and again on the end screen, which highlights "new high score" when beaten.
+- Docked: PATROL COMPLETE banner with the score breakdown, NEW HIGH SCORE when beaten, a crew-name field (any player, `SET_CREW_NAME`, max `crew_name_max_length`), the leaderboard with this patrol highlighted, and Play Again.
+- Sunk: SUBMARINE LOST banner saying nothing was banked, with the leaderboard.
+- Ports are a list (`port_positions`), with one entry for now. Docking at any of them ends the patrol.
 
-## Step 5: End screen and reset
+## Still open / next ideas
 
-- Docked: "PATROL COMPLETE" banner with score breakdown, leaderboard, crew-name field, Play Again.
-- Sunk: "LOST AT SEA" banner (existing game-over), leaderboard shown, nothing banked.
-- Play Again uses the existing `reset()`.
-
-## Open questions for the person
-
-A. Score formula: per-ship points as above, or something else (tonnage, time bonus, count only)?
-B. Sunk on the way home: lose everything (current assumption), or bank a fraction?
-C. Leaderboard: local JSON on the server laptop (assumed), or something shared online?
-D. One port at the start point (assumed), or several ports / a different port than the start?
+- The old sink-all-cargo VICTORY still exists only when `ship_population_min = 0`. It can be removed once nobody needs it.
+- Periscope landmark for the port, plus a bearing/range-to-port readout on the nav table.
+- BALL/PRESS/COMP AIR gauges are still unbound.

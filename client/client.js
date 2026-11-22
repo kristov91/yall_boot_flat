@@ -695,7 +695,20 @@ function applyState(message) {
   el('victory-banner').hidden = !data.won;
   el('cargo-sunk').textContent = `${data.cargo_sunk} cargo, ${data.destroyers_sunk} destroyer`;
   el('returned-banner').hidden = !data.returned;
-  el('returned-summary').textContent = `Sunk ${data.cargo_sunk} cargo and ${data.destroyers_sunk} destroyers`;
+  const fs = data.final_score || {};
+  if (data.returned && fs.score !== undefined) {
+    const penaltyPct = Math.round((fs.damage_penalty || 0) * 100);
+    el('returned-summary').textContent =
+      `Sunk ${fs.cargo_sunk} cargo and ${fs.destroyers_sunk} destroyers: ${fs.base} pts` +
+      (penaltyPct > 0 ? `, -${penaltyPct}% damage penalty` : '') + ` = ${fs.score} pts`;
+    el('new-high-score').hidden = !fs.new_high_score;
+    el('crew-name-row').hidden = data.leaderboard_entry_id < 0;
+  }
+  renderLeaderboard(el('leaderboard-returned'), data.leaderboard, data.leaderboard_entry_id);
+  renderLeaderboard(el('leaderboard-lost'), data.leaderboard, -1);
+  const atRiskPenalty = Math.round((data.damage_penalty || 0) * 100);
+  el('patrol-score').textContent = `${data.patrol_score}` +
+    (atRiskPenalty > 0 ? ` (-${atRiskPenalty}% damage)` : '') + ` - best ${data.best_score}`;
   let portStatus = `${Math.round(data.port_distance)} u`;
   if (!data.left_port) portStatus += ' (in harbor)';
   else if (data.dock_progress > 0) portStatus += ` - docking ${Math.round(data.dock_progress * 100)}%`;
@@ -755,6 +768,34 @@ function applyState(message) {
   }
 
   renderCurrentRoomCanvases(); // every tick, so output-bound gauges/needles/states animate live
+}
+
+// Top-N table for the end banners. Rebuilt only when the data actually
+// changes, not every 60Hz state, so it doesn't flicker.
+function renderLeaderboard(table, entries, myId) {
+  const key = JSON.stringify([entries, myId]);
+  if (table.dataset.key === key) return;
+  table.dataset.key = key;
+  table.replaceChildren();
+  if (!entries || entries.length === 0) return;
+  const head = table.insertRow();
+  ['#', 'Crew', 'Score', 'Cargo', 'Destroyers'].forEach((h) => {
+    const th = document.createElement('th');
+    th.textContent = h;
+    head.appendChild(th);
+  });
+  entries.forEach((e, i) => {
+    const row = table.insertRow();
+    if (e.id === myId) row.className = 'mine';
+    [i + 1, e.name, e.score, e.cargo_sunk, e.destroyers_sunk].forEach((v) => {
+      row.insertCell().textContent = String(v);
+    });
+  });
+}
+
+function saveCrewName() {
+  const name = el('crew-name-input').value.trim();
+  if (name) sendInput('SET_CREW_NAME', { name });
 }
 
 function sendInput(action, data) {
@@ -1429,16 +1470,16 @@ function updateMapUI(map) {
     ctx.stroke();
   }
 
-  if (map.port) {
+  (map.ports || []).forEach((port) => {
     // Home port: a dashed ring at its docking radius, drawn under everything.
     ctx.save();
     ctx.strokeStyle = '#4fc3f7';
     ctx.setLineDash([4, 4]);
     ctx.beginPath();
-    ctx.arc(centerX + (map.port.x - map.position.x) * MAP_SCALE, centerY + (map.port.y - map.position.y) * MAP_SCALE, map.port.radius * MAP_SCALE, 0, Math.PI * 2);
+    ctx.arc(centerX + (port.x - map.position.x) * MAP_SCALE, centerY + (port.y - map.position.y) * MAP_SCALE, port.radius * MAP_SCALE, 0, Math.PI * 2);
     ctx.stroke();
     ctx.restore();
-  }
+  });
 
   drawShipMarker(ctx, centerX, centerY, map.heading, '#4caf50');
 
@@ -1866,6 +1907,10 @@ el('reset-btn').addEventListener('click', resetGame);
 el('reset-btn-banner').addEventListener('click', resetGame);
 el('reset-btn-victory').addEventListener('click', resetGame);
 el('reset-btn-returned').addEventListener('click', resetGame);
+el('crew-name-btn').addEventListener('click', saveCrewName);
+el('crew-name-input').addEventListener('keydown', (event) => {
+  if (event.key === 'Enter') saveCrewName();
+});
 
 el('invulnerable-btn').addEventListener('click', (event) => {
   const currentlyOn = event.currentTarget.dataset.state === 'on';

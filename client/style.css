@@ -32,6 +32,34 @@ body {
   border: 2px solid #fff;
 }
 
+.banner-detail {
+  font-size: 16px;
+  font-weight: normal;
+  margin-top: 8px;
+}
+
+#new-high-score {
+  color: #ffd54f;
+  margin-top: 8px;
+}
+
+.leaderboard {
+  margin: 12px auto 0;
+  font-size: 14px;
+  font-weight: normal;
+  border-collapse: collapse;
+}
+
+.leaderboard td,
+.leaderboard th {
+  padding: 2px 10px;
+  text-align: left;
+}
+
+.leaderboard tr.mine {
+  background: rgba(255, 213, 79, 0.3);
+}
+
 #victory-banner button,
 #returned-banner button,
 #game-over-banner button {

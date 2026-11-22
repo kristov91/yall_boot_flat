@@ -1,6 +1,8 @@
 extends Node
 class_name Simulation
 
+const Leaderboard := preload("res://server/leaderboard.gd")
+
 ## Slice 3+: submarine movement, Helm/Dive stations, a real Engineering
 ## engine room (start/stop, throttle, gear, coolant, RPM/temp/oil/fuel), an
 ## electrical system (battery, charging, bilge pump, electric motor), a
@@ -166,17 +168,33 @@ const DT := 1.0 / 60.0
 @export var ship_sink_duration := 8.0
 
 @export_group("Port")
-## Home port - where the patrol starts and where it has to end for the crew
-## to bank its score (see _step_port()). Docking means being inside
-## port_radius, at or above surfaced_max_depth, and at or under
+## Home ports - the patrol starts at the first one and ends at whichever
+## one the crew docks in, banking its score (see _step_port()). Only one
+## for now; add more entries to port_positions for extra ports. Docking
+## means being inside port_radius of a port, at or above surfaced_max_depth, and at or under
 ## port_dock_max_speed (the sub's own 0..1 speed fraction) for
 ## port_dock_seconds in a row. The trigger only arms once the sub has been
-## at least port_leave_distance away, so a patrol can't end at tick 1.
-@export var port_position := Vector2.ZERO
+## at least port_leave_distance away from every port, so a patrol can't end
+## at tick 1.
+@export var port_positions: Array[Vector2] = [Vector2.ZERO]
 @export var port_radius := 60.0
 @export var port_leave_distance := 150.0
 @export var port_dock_seconds := 3.0
 @export var port_dock_max_speed := 0.05
+
+@export_group("Scoring")
+## Points per ship sunk this patrol. Banked only by docking at a port - a
+## sunk patrol scores nothing.
+@export var score_per_cargo := 100
+@export var score_per_destroyer := 50
+## Returning damaged costs a mild penalty: damage = flooding (0..1) plus
+## damage_per_leak for every unwelded leak, capped at 1, and the score is
+## multiplied by (1 - damage * damage_penalty_max). So a wrecked boat that
+## limps home still keeps 1 - damage_penalty_max of its points.
+@export var damage_penalty_max := 0.25
+@export var damage_per_leak := 0.1
+@export var leaderboard_size := 10
+@export var crew_name_max_length := 20
 
 @export_group("Detection")
 ## The sub's own three-tier detectability model - both what lets a
@@ -380,6 +398,12 @@ var next_convoy_id: int = 0
 var left_port: bool = false
 var dock_timer: float = 0.0
 var returned: bool = false
+## Filled in when the patrol docks (see _bank_score()); empty otherwise.
+var final_score: Dictionary = {}
+var leaderboard_entry_id: int = -1
+## Not an export - headless checks point it at a scratch file.
+var leaderboard_path: String = Leaderboard.DEFAULT_PATH
+var _leaderboard: Leaderboard = null
 
 # Life support: O2 is the real "health" now - it hits a ceiling of
 # (100 - flooding), so a fully flooded sub (100%) caps O2 at 0 outright, on
@@ -536,6 +560,8 @@ func reset() -> void:
 	left_port = false
 	dock_timer = 0.0
 	returned = false
+	final_score = {}
+	leaderboard_entry_id = -1
 
 	o2 = 100.0
 	flooding = 0.0
@@ -713,6 +739,8 @@ func apply_input(player_id: int, action: String, data: Dictionary) -> void:
 			_pickup_tool(player_id, data.get("tool_id", ""))
 		"DROP_TOOL":
 			_drop_tool(player_id, data.get("tool_id", ""))
+		"SET_CREW_NAME":
+			_set_crew_name(str(data.get("name", "")))
 		"RESET_GAME":
 			reset()
 		"SET_INVULNERABLE":
@@ -797,7 +825,10 @@ func _step_buoyancy() -> void:
 	buoyancy = clampf((ballast_neutral - ballast) / ballast_span, -1.0, 1.0)
 
 func _distance_to_port() -> float:
-	return position.distance_to(port_position)
+	var best := INF
+	for p in port_positions:
+		best = minf(best, position.distance_to(p))
+	return best
 
 ## Arms once the sub has really left port, then counts up dock_timer while
 ## it sits surfaced and (nearly) stopped inside port_radius - any of those
@@ -814,8 +845,59 @@ func _step_port() -> void:
 		dock_timer += DT
 		if dock_timer >= port_dock_seconds:
 			returned = true
+			_bank_score()
 	else:
 		dock_timer = 0.0
+
+func leaderboard() -> Leaderboard:
+	if _leaderboard == null or _leaderboard.path != leaderboard_path:
+		_leaderboard = Leaderboard.new(leaderboard_path, leaderboard_size)
+	return _leaderboard
+
+func _base_score() -> int:
+	return cargo_sunk * score_per_cargo + destroyers_sunk * score_per_destroyer
+
+## 0..1, see the Scoring export group.
+func _damage_fraction() -> float:
+	return clampf(flooding / 100.0 + leaks.size() * damage_per_leak, 0.0, 1.0)
+
+func _damage_penalty_fraction() -> float:
+	return _damage_fraction() * clampf(damage_penalty_max, 0.0, 1.0)
+
+## Called once, the tick the sub docks: totals the score and records it.
+func _bank_score() -> void:
+	var board := leaderboard()
+	var previous_best := board.best_score()
+	var base := _base_score()
+	var penalty := _damage_penalty_fraction()
+	var score := int(round(base * (1.0 - penalty)))
+	final_score = {
+		"score": score,
+		"base": base,
+		"cargo_sunk": cargo_sunk,
+		"destroyers_sunk": destroyers_sunk,
+		"damage_penalty": penalty,
+		"duration_seconds": tick * DT,
+		"previous_best": previous_best,
+		"new_high_score": score > previous_best,
+	}
+	leaderboard_entry_id = board.submit({
+		"name": "Crew",
+		"score": score,
+		"cargo_sunk": cargo_sunk,
+		"destroyers_sunk": destroyers_sunk,
+		"damage_penalty": penalty,
+		"duration_seconds": tick * DT,
+		"date": Time.get_datetime_string_from_system(),
+	})
+
+func _set_crew_name(raw_name: String) -> void:
+	if not returned or leaderboard_entry_id < 0:
+		return
+	var crew_name := raw_name.strip_edges().left(crew_name_max_length)
+	if crew_name == "":
+		return
+	leaderboard().rename(leaderboard_entry_id, crew_name)
 
 func _cargo_ships() -> Array:
 	return ships.filter(func(s): return s.type == "cargo")
@@ -1052,7 +1134,7 @@ func get_state() -> Dictionary:
 		# travel across the map.
 		"torpedoes": torpedoes.map(func(t): return {"x": t.position.x, "y": t.position.y, "heading": t.heading}),
 		# Home port is charted, not a contact - always shown.
-		"port": {"x": port_position.x, "y": port_position.y, "radius": port_radius},
+		"ports": port_positions.map(func(p): return {"x": p.x, "y": p.y, "radius": port_radius}),
 	}
 	if debug_show_enemy:
 		map_data["ships"] = ships.filter(func(s): return s.alive).map(func(s): return {
@@ -1091,6 +1173,16 @@ func get_state() -> Dictionary:
 		"port_distance": _distance_to_port(),
 		"left_port": left_port,
 		"dock_progress": clampf(dock_timer / maxf(port_dock_seconds, 0.001), 0.0, 1.0),
+		# Live "what we'd bank if we docked right now" - the crew's at-risk
+		# haul, and the best score to beat.
+		"patrol_score": int(round(_base_score() * (1.0 - _damage_penalty_fraction()))),
+		"damage_penalty": _damage_penalty_fraction(),
+		"best_score": leaderboard().best_score(),
+		"final_score": final_score,
+		# The whole board only once the patrol is over (docked or sunk), to
+		# keep the 60Hz state small the rest of the time.
+		"leaderboard": leaderboard().entries if (returned or sunk) else [],
+		"leaderboard_entry_id": leaderboard_entry_id,
 		"dev_mode": dev_mode,
 		"invulnerable": invulnerable,
 		"ignore_overheat_effects": debug_ignore_overheat_effects,
