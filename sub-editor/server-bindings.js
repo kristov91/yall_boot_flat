@@ -66,6 +66,7 @@ const SERVER_STATE_PATHS = [
   { path: 'flood_valve', type: 'float', min: 0, max: 1 },
   { path: 'ballast', type: 'float', min: 0, max: 100, note: '% of the ballast tanks full of water. Drives buoyancy: 50 (ballast_neutral) is neutral, more is negative buoyancy, less is positive. For the BALL gauge.' },
   { path: 'buoyancy', type: 'float', min: -1, max: 1, note: 'Set by ballast: +1 tanks empty (rises), 0 neutral, -1 tanks full (sinks). Buoyancy, not the valves, is what moves the boat. For the BUOY gauge.' },
+  { path: 'vertical_speed', type: 'float', min: -6, max: 8, note: 'Depth-units/sec, positive = going deeper. Buoyancy sets it directly; dive planes add to it only while underway (scaled by speed); flooding adds a sink.' },
   { path: 'comp_air', type: 'float', min: 0, max: 100, note: 'Compressed air left for blowing ballast; refills slowly while the diesel runs. For the COMP AIR gauge.' },
   { path: 'sonar_dial', type: 'float', min: 0, max: 360 },
   { path: 'sonar.db', type: 'float', min: 0, max: 100 },
