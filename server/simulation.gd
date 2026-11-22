@@ -77,6 +77,20 @@ const DT := 1.0 / 60.0
 @export var max_dive_rate := 5.0 # depth-units/sec at full dive planes
 @export var max_depth := 200.0
 
+@export_group("Ballast")
+## Ballast tanks, worked from the dive station's BLOW and FLOOD valves.
+## ballast is 0..100 (% of the tanks full of water); at ballast_neutral the
+## boat is neutrally buoyant and only the dive planes move it. Heavier than
+## neutral sinks, lighter rises, up to ballast_max_rate depth-units/sec at
+## completely full / empty tanks. Starts at neutral so a crew that never
+## touches the valves gets exactly the old planes-only handling.
+@export var ballast_neutral := 50.0
+@export var ballast_max_rate := 3.0 # depth-units/sec at 0% or 100% ballast
+@export var ballast_flood_rate := 5.0 # %/sec ballast gained with FLOOD fully open
+@export var ballast_blow_rate := 8.0 # %/sec ballast pushed out with BLOW fully open (needs comp_air)
+@export var comp_air_use_rate := 4.0 # %/sec compressed air spent with BLOW fully open
+@export var comp_air_recharge_rate := 0.5 # %/sec compressed air refilled while the diesel runs
+
 @export_group("Dev")
 ## Off for a real round: every debug safety toggle below (invulnerable,
 ## ignore overheat, unlimited supplies, ignore game over) starts OFF, so the
@@ -311,6 +325,10 @@ var position := Vector2.ZERO
 var heading: float = 0.0 # degrees
 var rudder: float = 0.0 # -1..1
 var dive_planes: float = 0.0 # -1..1
+var blow_valve: float = 0.0 # 0..1 opening, dive station BLOW valve
+var flood_valve: float = 0.0 # 0..1 opening, dive station FLOOD valve
+var ballast: float = 50.0 # 0..100, see the Ballast export group
+var comp_air: float = 100.0 # 0..100, spent by blowing ballast
 var depth: float = 0.0
 var sunk: bool = false
 ## The round's win condition: set once every cargo ship in every convoy has
@@ -460,6 +478,10 @@ func reset() -> void:
 	heading = 0.0
 	rudder = 0.0
 	dive_planes = 0.0
+	blow_valve = 0.0
+	flood_valve = 0.0
+	ballast = ballast_neutral
+	comp_air = 100.0
 	depth = 0.0
 	sunk = false
 	won = false
@@ -562,6 +584,12 @@ func apply_input(player_id: int, action: String, data: Dictionary) -> void:
 		"SET_DIVE_PLANES":
 			if not sunk and _station_occupant(DIVE_STATION) == player_id:
 				dive_planes = clampf(float(data.get("value", 0.0)), -1.0, 1.0)
+		"SET_BLOW_VALVE":
+			if not sunk and _station_occupant(DIVE_STATION) == player_id:
+				blow_valve = clampf(float(data.get("value", 0.0)), 0.0, 1.0)
+		"SET_FLOOD_VALVE":
+			if not sunk and _station_occupant(DIVE_STATION) == player_id:
+				flood_valve = clampf(float(data.get("value", 0.0)), 0.0, 1.0)
 		"SET_SONAR_DIAL":
 			if not sunk and _station_occupant(SONAR_STATION) == player_id:
 				sonar_dial = fposmod(float(data.get("value", 0.0)), 360.0)
@@ -680,7 +708,10 @@ func step() -> void:
 	# and it can't just sit at the surface breathing while leaks this bad
 	# are still open.
 	var flooding_sink := flooding_sink_rate * (flooding / 100.0)
-	depth = clampf(depth + (dive_planes * max_dive_rate + flooding_sink) * DT, 0.0, max_depth)
+	_step_ballast()
+	var ballast_span := maxf(ballast_neutral, 100.0 - ballast_neutral)
+	var ballast_sink := ballast_max_rate * (ballast - ballast_neutral) / ballast_span
+	depth = clampf(depth + (dive_planes * max_dive_rate + flooding_sink + ballast_sink) * DT, 0.0, max_depth)
 
 	_step_ships()
 	_step_sinking_ships()
@@ -689,6 +720,19 @@ func step() -> void:
 	_step_welding()
 	_step_flooding()
 	_check_victory()
+
+## FLOOD lets sea water into the ballast tanks; BLOW forces it out with
+## compressed air, which only the running diesel's compressor refills. Both
+## valves can be open at once (they just fight each other).
+func _step_ballast() -> void:
+	ballast += flood_valve * ballast_flood_rate * DT
+	if blow_valve > 0.0 and (debug_unlimited_supplies or comp_air > 0.0):
+		ballast -= blow_valve * ballast_blow_rate * DT
+		if not debug_unlimited_supplies:
+			comp_air = maxf(0.0, comp_air - blow_valve * comp_air_use_rate * DT)
+	ballast = clampf(ballast, 0.0, 100.0)
+	if engine_running:
+		comp_air = minf(100.0, comp_air + comp_air_recharge_rate * DT)
 
 func _cargo_ships() -> Array:
 	return ships.filter(func(s): return s.type == "cargo")
@@ -936,6 +980,10 @@ func get_state() -> Dictionary:
 		"heading": heading,
 		"rudder": rudder,
 		"dive_planes": dive_planes,
+		"blow_valve": blow_valve,
+		"flood_valve": flood_valve,
+		"ballast": ballast,
+		"comp_air": comp_air,
 		"sonar_dial": sonar_dial,
 		"periscope": periscope,
 		"o2": o2,

@@ -1623,7 +1623,7 @@
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "SET_BLOW_VALVE",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -1640,10 +1640,11 @@
             "hitboxHeight": 172.79999999999998,
             "hitboxOffsetX": 0,
             "hitboxOffsetY": 0,
-            "dragRotationMin": -360,
+            "dragRotationMin": 0,
             "dragRotationMax": 360,
             "hitboxUniformScale": true,
-            "hitboxFollowScale": true
+            "hitboxFollowScale": true,
+            "payloadKey": "value"
           },
           {
             "id": "valve_4x_copy",
@@ -1666,7 +1667,7 @@
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "SET_FLOOD_VALVE",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -1685,8 +1686,9 @@
             "hitboxOffsetY": 0,
             "hitboxUniformScale": true,
             "hitboxFollowScale": true,
-            "dragRotationMin": -360,
-            "dragRotationMax": 360
+            "dragRotationMin": 0,
+            "dragRotationMax": 360,
+            "payloadKey": "value"
           },
           {
             "id": "needle12_4x",
