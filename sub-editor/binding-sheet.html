@@ -1,0 +1,213 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sub Editor - Binding Sheet</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: monospace;
+    background: #111;
+    color: #eee;
+    margin: 0;
+  }
+  a { color: #6fc3ff; }
+  code {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #b5f3c0;
+  }
+  .page-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 16px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+  }
+  .page-nav a {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 13px;
+  }
+  .page-nav a:hover { color: #4caf50; }
+  .page-nav a.current {
+    color: #4caf50;
+    font-weight: bold;
+    pointer-events: none;
+  }
+  main {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 32px 40px 120px;
+  }
+  h1 { color: #4caf50; margin-top: 0; }
+  h2 {
+    color: #4caf50;
+    border-bottom: 1px solid #333;
+    padding-bottom: 6px;
+    margin-top: 40px;
+  }
+  p.lede { color: #aaa; font-size: 15px; line-height: 1.5; }
+  input#filter {
+    width: 100%;
+    font-family: monospace;
+    font-size: 13px;
+    background: #1a1a1a;
+    color: #eee;
+    border: 1px solid #444;
+    border-radius: 3px;
+    padding: 8px 10px;
+    margin-bottom: 20px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-bottom: 12px;
+    font-size: 13px;
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #1a1a1a;
+    color: #9ccc65;
+  }
+  tr:nth-child(even) td { background: #151515; }
+  tr.hidden-row { display: none; }
+  .name { color: #ffca28; font-weight: bold; }
+  .note { color: #999; font-size: 12px; }
+  .callout {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-left: 3px solid #4caf50;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 14px 0;
+    font-size: 13px;
+    line-height: 1.5;
+  }
+  .empty-note { color: #666; font-size: 12px; margin: 10px 0; }
+</style>
+</head>
+<body>
+
+<div class="page-nav">
+  <a href="index.html">&larr; Sub Editor</a>
+  <a href="help.html">Help / Docs</a>
+  <a href="binding-sheet.html" class="current">Binding Sheet</a>
+</div>
+
+<main>
+<h1>Binding Sheet</h1>
+<p class="lede">
+  Every server action and state path the Sub Editor's autocomplete actually
+  knows about, rendered straight from
+  <code>sub-editor/server-bindings.js</code> - the same file editor.js loads,
+  so this page can never drift out of sync with what the Binding/State
+  Binding fields will actually accept. See
+  <a href="help.html#bindings">Help &amp; Docs &rarr; Bindings &amp; Payload
+  Keys</a> for what these fields mean and how they're used.
+</p>
+
+<div class="callout">
+  <strong>bool</strong> fields: a Visual State's <strong>Name</strong> must be
+  the exact string <code>true</code> or <code>false</code> (lowercase, no
+  quotes typed in the field itself) to match a boolean value - never
+  <code>T</code>, <code>1</code>, or <code>on</code>. For a Rotate/Linear
+  Output's Value Min/Max, use the plain numbers <code>0</code> and
+  <code>1</code> - a JS boolean behaves as 0/1 automatically in that math, so
+  Min=0/Max=1 always works. A Texture Swap output needs no range at all: it
+  just checks the raw value directly. See
+  <a href="help.html#visual-states">Help &amp; Docs &rarr; Visual
+  States</a> and <a href="help.html#output-texture">&rarr; Texture Swap</a>.
+</div>
+
+<input type="text" id="filter" placeholder="Filter by name/path...">
+
+<h2 id="actions">Server Actions (Binding field)</h2>
+<p class="lede" style="font-size:13px;">
+  Sent by the editor to the server when a control is clicked or dragged.
+</p>
+<table id="actions-table">
+  <thead>
+    <tr><th>Name</th><th>Payload Key</th><th>Value Type</th><th>Range / Options</th><th>Notes</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<h2 id="state-paths">Server State Paths (Value / State Binding field)</h2>
+<p class="lede" style="font-size:13px;">
+  Read by the editor from the server's broadcast state to drive an Output or
+  a Visual State. Dot-paths can include an array index, e.g.
+  <code>torpedo_tubes.0.state</code>. A blank Range here often means the
+  value is derived rather than fixed - see its Notes column.
+</p>
+<table id="state-paths-table">
+  <thead>
+    <tr><th>Path</th><th>Type</th><th>Range / Options</th><th>Notes</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+</main>
+
+<script src="server-bindings.js"></script>
+<script>
+  function rangeOrOptions(entry) {
+    if (entry.options) return entry.options.map((o) => `<code>${o}</code>`).join(' / ');
+    if (entry.min != null || entry.max != null) return `${entry.min ?? '-'} to ${entry.max ?? '-'}`;
+    if (entry.valueType === 'bool' || entry.type === 'bool') return '<code>true</code> / <code>false</code>';
+    return '<span class="empty-note">-</span>';
+  }
+
+  function noteCell(entry) {
+    return entry.note ? `<span class="note">${entry.note}</span>` : '<span class="empty-note">-</span>';
+  }
+
+  const actionsBody = document.querySelector('#actions-table tbody');
+  SERVER_ACTIONS.forEach((a) => {
+    const tr = document.createElement('tr');
+    tr.dataset.filterKey = a.name.toLowerCase();
+    tr.innerHTML = `
+      <td class="name">${a.name}</td>
+      <td>${a.payloadKey ? `<code>${a.payloadKey}</code>` : '<span class="empty-note">(none - trigger)</span>'}</td>
+      <td>${a.valueType}</td>
+      <td>${rangeOrOptions(a)}</td>
+      <td>${noteCell(a)}</td>
+    `;
+    actionsBody.appendChild(tr);
+  });
+
+  const statePathsBody = document.querySelector('#state-paths-table tbody');
+  SERVER_STATE_PATHS.forEach((s) => {
+    const tr = document.createElement('tr');
+    tr.dataset.filterKey = s.path.toLowerCase();
+    tr.innerHTML = `
+      <td class="name">${s.path}</td>
+      <td>${s.type}</td>
+      <td>${rangeOrOptions(s)}</td>
+      <td>${noteCell(s)}</td>
+    `;
+    statePathsBody.appendChild(tr);
+  });
+
+  document.getElementById('filter').addEventListener('input', (event) => {
+    const query = event.target.value.trim().toLowerCase();
+    document.querySelectorAll('#actions-table tbody tr, #state-paths-table tbody tr').forEach((tr) => {
+      tr.classList.toggle('hidden-row', !!query && !tr.dataset.filterKey.includes(query));
+    });
+  });
+</script>
+
+</body>
+</html>

@@ -1,0 +1,598 @@
+[hidden] {
+  display: none !important;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  font-family: monospace;
+  background: #111;
+  color: #eee;
+  margin: 0;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+button,
+select,
+input,
+textarea {
+  font-family: monospace;
+  font-size: 13px;
+}
+
+button {
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+#help-link,
+#binding-sheet-link {
+  display: inline-block;
+  padding: 6px 10px;
+  font-family: monospace;
+  font-size: 13px;
+  color: #eee;
+  background: #222;
+  border: 1px solid #444;
+  border-radius: 3px;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+#help-link:hover,
+#binding-sheet-link:hover {
+  border-color: #4caf50;
+  color: #4caf50;
+}
+
+#top-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #1a1a1a;
+  border-bottom: 1px solid #333;
+  flex-wrap: wrap;
+}
+
+#top-bar-spacer {
+  flex: 1;
+}
+
+#main-area {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+}
+
+#left-panel,
+#right-panel {
+  width: 240px;
+  flex-shrink: 0;
+  padding: 12px;
+  overflow-y: auto;
+  background: #161616;
+}
+
+#left-panel {
+  border-right: 1px solid #333;
+}
+
+#right-panel {
+  border-left: 1px solid #333;
+}
+
+.panel-title {
+  color: #888;
+  font-size: 11px;
+  margin: 12px 0 6px;
+  text-transform: uppercase;
+}
+
+.panel-title:first-child {
+  margin-top: 0;
+}
+
+#canvas-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: #060606;
+  min-width: 0;
+  position: relative;
+}
+
+#editor-canvas {
+  background: #0a0a0a;
+  border: 1px solid #333;
+  cursor: grab;
+  max-width: 100%;
+  max-height: calc(100% - 30px);
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+#canvas-hint {
+  color: #666;
+  font-size: 11px;
+  padding: 6px;
+  text-align: center;
+}
+
+#object-edit-banner {
+  width: 100%;
+  background: #3a2f00;
+  color: #ffca28;
+  border-bottom: 1px solid #5a4a00;
+  padding: 6px 12px;
+  font-size: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  justify-content: center;
+}
+
+#object-edit-banner button {
+  padding: 3px 8px;
+  font-size: 11px;
+}
+
+.asset-row,
+.list-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 0;
+  border-bottom: 1px solid #262626;
+}
+
+.asset-category {
+  margin-bottom: 4px;
+}
+
+.asset-category summary {
+  cursor: pointer;
+  color: #4caf50;
+  font-size: 11px;
+  text-transform: uppercase;
+  padding: 4px 0;
+  list-style: revert;
+  user-select: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.asset-category summary::marker {
+  color: #666;
+}
+
+.asset-hide-label {
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+}
+
+.asset-hide-label input,
+.asset-hide-checkbox {
+  margin: 0;
+  cursor: pointer;
+}
+
+.asset-category .asset-row {
+  padding-left: 6px;
+}
+
+.asset-category .asset-row button {
+  padding: 2px 5px;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.asset-row.selected {
+  background: #1f3325;
+}
+
+.asset-row span {
+  cursor: pointer;
+}
+
+#asset-bulk-actions {
+  background: #1a2e1f;
+  border: 1px solid #2d4a34;
+  border-radius: 3px;
+  padding: 6px;
+  margin-bottom: 6px;
+  font-size: 11px;
+}
+
+#asset-bulk-count {
+  color: #8bc34a;
+  display: block;
+  margin-bottom: 4px;
+}
+
+#asset-bulk-actions button {
+  padding: 3px 6px;
+  font-size: 11px;
+}
+
+.list-row {
+  justify-content: space-between;
+}
+
+.list-row span {
+  cursor: pointer;
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.list-row.selected span {
+  color: #4caf50;
+  font-weight: bold;
+}
+
+.list-row.locked span {
+  color: #666;
+  cursor: not-allowed;
+}
+
+.list-row button {
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.layer-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0;
+  border-bottom: 1px solid #262626;
+  font-size: 11px;
+  flex-wrap: wrap;
+}
+
+.layer-row span {
+  flex: 1;
+  cursor: pointer;
+  min-width: 60px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layer-row button,
+.layer-row .layer-flatten-label,
+.layer-row .layer-select-label {
+  font-size: 11px;
+}
+
+.layer-row button.icon-btn {
+  padding: 2px 6px;
+}
+
+.layer-flatten-label,
+.layer-select-label {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  color: #999;
+  white-space: nowrap;
+}
+
+.layer-flatten-label input,
+.layer-select-label input {
+  margin: 0;
+}
+
+#new-layer-btn {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+.asset-thumb {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+  background: #222;
+  border: 1px solid #444;
+  cursor: pointer;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.prefab-swatch {
+  width: 28px;
+  height: 28px;
+  border: 1px solid #444;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.prefab-swatch img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+}
+
+.asset-row span {
+  font-size: 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+#add-placeholder-btn,
+#add-player-spawn-btn {
+  width: 100%;
+  margin-bottom: 4px;
+}
+
+#asset-search-input {
+  display: block;
+  width: 100%;
+  margin-bottom: 6px;
+  background: #222;
+  color: #eee;
+  border: 1px solid #444;
+  padding: 4px 6px;
+}
+
+#left-panel > label {
+  display: block;
+  font-size: 11px;
+  color: #ccc;
+  margin-bottom: 4px;
+}
+
+#inspector-form label {
+  display: block;
+  font-size: 11px;
+  color: #999;
+  margin-bottom: 8px;
+}
+
+#inspector-form input[type="text"],
+#inspector-form input[type="number"],
+#inspector-form select,
+#inspector-form textarea {
+  display: block;
+  width: 100%;
+  margin-top: 2px;
+  background: #222;
+  color: #eee;
+  border: 1px solid #444;
+  padding: 4px;
+}
+
+#inspector-form input[type="checkbox"] {
+  margin-right: 6px;
+}
+
+#inspector-form input[type="color"] {
+  width: 100%;
+  margin-top: 2px;
+  height: 28px;
+  background: #222;
+  border: 1px solid #444;
+}
+
+#folder-status {
+  color: #888;
+  font-size: 12px;
+  margin-right: 8px;
+}
+
+#pivot-hint,
+#spawn-hint,
+#paint-hint,
+#texture-hint,
+#snap-stops-hint,
+#hitbox-hint,
+#hpattern-hint,
+#anchor-hint,
+#toggle-hint,
+#toggle-single-binding-hint,
+#toggle-rotation-hint,
+#insp-binding-hint,
+#payload-key-hint,
+#scope-hint,
+#drag-infinite-hint,
+#sonar-range-hint,
+#sonar-pulse-speed-hint,
+#smoothing-hint,
+#wobble-hint {
+  color: #666;
+  font-size: 10px;
+  margin-bottom: 8px;
+}
+
+#paint-leak-btn.active,
+#paint-fire-btn.active,
+#test-mode-btn.active {
+  outline: 2px solid #fff;
+  font-weight: bold;
+}
+
+.section-label {
+  color: #4caf50;
+  font-size: 11px;
+  margin: 12px 0 6px;
+  text-transform: uppercase;
+  border-top: 1px solid #333;
+  padding-top: 8px;
+}
+
+/* Every inspector section is a <details>, collapsed by default, with its
+   .section-label doubling as the <summary> - list-style: revert brings back
+   the native disclosure triangle a global reset elsewhere may have stripped
+   from <summary>, same as the Asset Library's own category headers. */
+summary.section-label {
+  cursor: pointer;
+  list-style: revert;
+  user-select: none;
+}
+
+summary.section-label::marker {
+  color: #666;
+}
+
+details {
+  margin-bottom: 4px;
+}
+
+details > *:not(summary) {
+  margin-left: 2px;
+}
+
+.row {
+  display: flex;
+  gap: 8px;
+}
+
+.row label {
+  flex: 1;
+}
+
+.toggle-state-row {
+  align-items: flex-start;
+}
+
+.toggle-state-col {
+  flex: 1;
+  background: #1a1a1a;
+  border: 1px solid #333;
+  border-radius: 3px;
+  padding: 6px;
+}
+
+.toggle-state-col-label {
+  color: #4caf50;
+  font-size: 10px;
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+#inspector-empty {
+  color: #666;
+  font-size: 12px;
+}
+
+#snap-stops-readout {
+  color: #999;
+  font-size: 11px;
+  margin: 4px 0;
+  word-break: break-word;
+}
+
+#hpattern-add-node-btn {
+  width: 100%;
+  margin: 4px 0;
+}
+
+.hpattern-node-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 0;
+  font-size: 11px;
+  border-bottom: 1px solid #262626;
+}
+
+.hpattern-node-row span {
+  color: #999;
+  min-width: 18px;
+}
+
+.hpattern-node-row input {
+  width: 60px;
+  flex-shrink: 0;
+}
+
+.hpattern-node-row button {
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.hpattern-connect-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-wrap: wrap;
+  padding: 0 0 6px 18px;
+  font-size: 10px;
+  color: #888;
+}
+
+.hpattern-edge-btn {
+  padding: 1px 6px;
+  font-size: 10px;
+  background: #222;
+  color: #999;
+  border: 1px solid #444;
+}
+
+.hpattern-edge-btn.connected {
+  background: #1f3325;
+  color: #4caf50;
+  border-color: #2d4a34;
+  font-weight: bold;
+}
+
+#add-state-btn {
+  width: 100%;
+  margin: 4px 0;
+}
+
+.state-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 0;
+  font-size: 11px;
+  border-bottom: 1px solid #262626;
+  flex-wrap: wrap;
+}
+
+.state-row input[type="text"] {
+  width: 70px;
+  flex-shrink: 0;
+}
+
+.state-row select {
+  width: 90px;
+  flex-shrink: 0;
+}
+
+.state-row input[type="number"] {
+  width: 50px;
+  flex-shrink: 0;
+}
+
+.state-row input[type="color"] {
+  width: 28px;
+  height: 22px;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.state-row button {
+  padding: 2px 6px;
+  font-size: 11px;
+}
+
+.state-row.is-default span {
+  color: #4caf50;
+  font-weight: bold;
+}

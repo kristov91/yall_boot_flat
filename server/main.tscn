@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://nd48gm0mqlam"]
+
+[ext_resource type="Script" uid="uid://bgqwiqoios4ay" path="res://server/main.gd" id="1"]
+[ext_resource type="Script" uid="uid://hynkf2nu6ccn" path="res://server/network_server.gd" id="2"]
+[ext_resource type="Script" uid="uid://j2kpchua8u6c" path="res://server/simulation.gd" id="3"]
+
+[node name="Main" type="Node" unique_id=469645414]
+script = ExtResource("1")
+
+[node name="NetworkServer" type="Node" parent="." unique_id=518780118]
+script = ExtResource("2")
+
+[node name="Simulation" type="Node" parent="." unique_id=1304955650]
+script = ExtResource("3")
+torpedo_turn_rate = 4.0

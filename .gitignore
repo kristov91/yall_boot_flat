@@ -1,0 +1,25 @@
+# Godot 4+ specific ignores
+.godot/
+/android/
+
+# Sub-editor autosave backups (kept locally, not published)
+sub_editor_backup_*.json
+*.bak
+*.backup
+*~
+
+# Node / tooling
+node_modules/
+npm-debug.log*
+*.log
+
+# Secrets and local env
+.env
+.env.*
+
+# OS / editor clutter
+Thumbs.db
+desktop.ini
+.DS_Store
+.vscode/
+.idea/

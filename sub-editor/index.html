@@ -1,0 +1,531 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sub Editor</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div id="top-bar">
+  <strong>SUB EDITOR</strong>
+
+  <label>Room:
+    <select id="room-select"></select>
+  </label>
+  <button id="new-room-btn">+ New Room</button>
+
+  <button id="undo-btn" title="Ctrl+Z">Undo</button>
+  <button id="redo-btn" title="Ctrl+Shift+Z">Redo</button>
+
+  <label>View:
+    <select id="view-select"></select>
+  </label>
+  <button id="new-station-btn">+ New Station</button>
+  <button id="rename-station-btn" hidden>Rename Station</button>
+  <button id="delete-station-btn" hidden>Delete Station</button>
+
+  <label>Preview:
+    <select id="device-preview-select">
+      <option value="">Design (960x540)</option>
+      <option value="phone-portrait">Phone Portrait (375x667)</option>
+      <option value="phone-landscape">Phone Landscape (667x375)</option>
+      <option value="tablet-portrait">Tablet Portrait (768x1024)</option>
+      <option value="tablet-landscape">Tablet Landscape (1024x768)</option>
+      <option value="laptop">Laptop (1280x720)</option>
+    </select>
+  </label>
+
+  <button id="test-mode-btn" title="Drag/click controls the way a player would - no server needed">&#127918; Test Mode</button>
+
+  <span id="top-bar-spacer"></span>
+
+  <button id="choose-folder-btn">Choose Assets Folder...</button>
+  <button id="reconnect-folder-btn" hidden>Reconnect to Assets Folder</button>
+  <button id="refresh-folder-btn" hidden>Refresh from Folder</button>
+  <span id="folder-status"></span>
+
+  <button id="load-images-btn">Load Images...</button>
+  <input type="file" id="image-file-input" accept="image/*" multiple hidden>
+
+  <button id="save-backup-btn" title="Downloads a complete project file - every room, prefab, and asset image - independent of this browser's storage">Save Project Backup...</button>
+  <button id="load-backup-btn" title="Restores every room, prefab, and asset from a project backup file, replacing what's currently loaded">Load Project Backup...</button>
+  <input type="file" id="backup-file-input" accept="application/json" hidden>
+  <span id="project-backup-status"></span>
+
+  <button id="choose-export-folder-btn">Choose Export Folder...</button>
+  <button id="reconnect-export-folder-btn" hidden>Reconnect to Export Folder</button>
+  <span id="export-folder-status"></span>
+
+  <button id="export-btn">Export Room</button>
+  <button id="export-all-btn">Export All Rooms</button>
+  <button id="import-btn">Import Room JSON</button>
+  <input type="file" id="import-file-input" accept="application/json" hidden>
+
+  <button id="validate-btn">Validate</button>
+  <a id="help-link" href="help.html" target="_blank" rel="noopener">Help / Docs</a>
+  <a id="binding-sheet-link" href="binding-sheet.html" target="_blank" rel="noopener">Binding Sheet</a>
+</div>
+
+<div id="main-area">
+
+  <div id="left-panel">
+    <div class="panel-title">ASSET LIBRARY</div>
+    <input type="text" id="asset-search-input" placeholder="Search assets...">
+    <div class="row">
+      <button id="asset-hide-all-btn" title="Hide every asset in the library from Binding-side dropdowns - pick individual ones back on afterward">Hide All</button>
+      <button id="asset-show-all-btn" title="Show every asset in the library in Binding-side dropdowns again">Show All</button>
+    </div>
+    <div id="asset-bulk-actions" hidden>
+      <span id="asset-bulk-count"></span>
+      <div class="row">
+        <button id="asset-bulk-category-btn">Set Category...</button>
+        <button id="asset-bulk-hide-btn">Hide</button>
+        <button id="asset-bulk-show-btn">Show</button>
+        <button id="asset-bulk-delete-btn">Delete</button>
+        <button id="asset-bulk-clear-btn">Clear</button>
+      </div>
+    </div>
+    <div id="asset-list"></div>
+
+    <div class="panel-title">ADD</div>
+    <button id="add-placeholder-btn">+ Placeholder Object</button>
+    <button id="add-player-spawn-btn">+ Player Spawn</button>
+    <button id="add-scope-btn">+ Scope Object</button>
+    <button id="add-indicator-btn">+ Indicator Light</button>
+
+    <div class="panel-title">PAINT ZONES</div>
+    <div class="row">
+      <button id="paint-leak-btn">Paint Leak Zone</button>
+      <button id="paint-fire-btn">Paint Fire Zone</button>
+    </div>
+    <label>Brush Size <input type="number" id="brush-size-input" value="30" min="4" max="200"></label>
+    <div id="paint-hint" hidden>Painting - drag on the canvas. Click the tool again, or press Escape, to stop.</div>
+
+    <div class="panel-title">META LAYERS</div>
+    <label><input type="checkbox" id="toggle-spawn-visibility" checked> Show Spawns</label>
+    <label><input type="checkbox" id="toggle-leak-visibility" checked> Show Leak Zones</label>
+    <label><input type="checkbox" id="toggle-fire-visibility" checked> Show Fire Zones</label>
+
+    <div class="panel-title">PREFABS</div>
+    <div id="prefab-list"></div>
+
+    <div class="panel-title">LAYERS</div>
+    <div id="layer-list"></div>
+    <button id="new-layer-btn">+ New Layer</button>
+
+    <div class="panel-title" id="object-list-title">OBJECTS IN ROOM</div>
+    <div id="object-list"></div>
+  </div>
+
+  <div id="canvas-area">
+    <div id="object-edit-banner" hidden>
+      Editing object: <strong id="object-edit-banner-name"></strong> - everything else is dimmed and locked
+      <button id="exit-object-edit-btn">&larr; Back to Room</button>
+    </div>
+    <canvas id="editor-canvas" width="960" height="540"></canvas>
+    <div id="canvas-hint">Drag empty space to box-select. Hold Space + drag to pan. Scroll to zoom. Click/shift-click objects to select, drag to move. Double-click a group to edit its parts. Arrow keys nudge, Delete removes, Ctrl+D duplicates, Ctrl+G groups.</div>
+  </div>
+
+  <div id="right-panel">
+    <div class="panel-title">INSPECTOR</div>
+    <div id="inspector-empty">Nothing selected.</div>
+
+    <div id="inspector-multi" hidden>
+      <div id="multi-select-summary"></div>
+      <label><input type="checkbox" id="insp-multi-uniform-resize"> Uniform Resize (drag a corner handle)</label>
+
+      <div class="section-label">Align</div>
+      <div class="row">
+        <button id="align-left-btn" title="Align left edges">&#8676;|</button>
+        <button id="align-center-h-btn" title="Align horizontal centers">|&#8942;|</button>
+        <button id="align-right-btn" title="Align right edges">|&#8677;</button>
+      </div>
+      <div class="row">
+        <button id="align-top-btn" title="Align top edges">&#8672;&#8942;</button>
+        <button id="align-middle-v-btn" title="Align vertical centers">&#8942;&#8942;&#8942;</button>
+        <button id="align-bottom-btn" title="Align bottom edges">&#8674;&#8942;</button>
+      </div>
+
+      <div class="section-label">Distribute</div>
+      <div class="row">
+        <button id="distribute-h-btn" title="Distribute evenly, left to right (3+ objects)">Horizontally</button>
+        <button id="distribute-v-btn" title="Distribute evenly, top to bottom (3+ objects)">Vertically</button>
+      </div>
+
+      <div class="row">
+        <button id="group-selected-btn">Group</button>
+        <button id="duplicate-multi-btn">Duplicate</button>
+        <button id="delete-multi-btn">Delete</button>
+      </div>
+    </div>
+
+    <div id="inspector-form" hidden>
+
+      <label>Name <input type="text" id="insp-name"></label>
+      <label>ID <input type="text" id="insp-id"></label>
+
+      <div id="insp-type-section">
+        <label>Object Type
+          <select id="insp-type">
+            <option value="decoration">Decoration</option>
+            <option value="station">Station</option>
+            <option value="control">Control</option>
+            <option value="tool_target">Tool Target</option>
+            <option value="player_spawn">Player Spawn</option>
+          </select>
+        </label>
+      </div>
+
+      <details id="insp-transform-section">
+        <summary class="section-label">Transform</summary>
+        <div class="row">
+          <label>X <input type="number" id="insp-x"></label>
+          <label>Y <input type="number" id="insp-y"></label>
+        </div>
+        <div class="row">
+          <label>Rotation&deg; <input type="number" id="insp-rotation"></label>
+        </div>
+        <div class="row">
+          <label>Scale X <input type="number" id="insp-scale-x" step="0.1"></label>
+          <label>Scale Y <input type="number" id="insp-scale-y" step="0.1"></label>
+        </div>
+        <label><input type="checkbox" id="insp-scale-uniform"> Uniform Scale (link X/Y)</label>
+      </details>
+
+      <details id="insp-anchor-section">
+        <summary class="section-label">Responsive Anchor</summary>
+        <div id="anchor-hint">For screen-space UI overlays (HUD icons, buttons) rather than physical room objects. Only visible in the Device Preview above - has no effect on the normal room view or on export positioning of world objects.</div>
+        <label>Anchor
+          <select id="insp-anchor">
+            <option value="none">None (world-fixed)</option>
+            <option value="top-left">Top Left</option>
+            <option value="top-center">Top Center</option>
+            <option value="top-right">Top Right</option>
+            <option value="middle-left">Middle Left</option>
+            <option value="center">Center</option>
+            <option value="middle-right">Middle Right</option>
+            <option value="bottom-left">Bottom Left</option>
+            <option value="bottom-center">Bottom Center</option>
+            <option value="bottom-right">Bottom Right</option>
+          </select>
+        </label>
+        <div class="row" id="insp-anchor-offset-fields" hidden>
+          <label>Offset X <input type="number" id="insp-anchor-offset-x"></label>
+          <label>Offset Y <input type="number" id="insp-anchor-offset-y"></label>
+        </div>
+      </details>
+
+      <details id="insp-shape-section">
+        <summary class="section-label">Appearance</summary>
+        <div class="row">
+          <label>Width <input type="number" id="insp-width"></label>
+          <label>Height <input type="number" id="insp-height"></label>
+        </div>
+        <label>Placeholder Color <input type="color" id="insp-color"></label>
+        <div class="row">
+          <label>Pivot X <input type="number" id="insp-pivot-x" step="0.05"></label>
+          <label>Pivot Y <input type="number" id="insp-pivot-y" step="0.05"></label>
+        </div>
+        <div id="pivot-hint">0,0 = top-left &nbsp; 0.5,0.5 = center &nbsp; 1,1 = bottom-right. Drag the orange dot on the object to set it visually.</div>
+      </details>
+
+      <details id="insp-scope-section" hidden>
+        <summary class="section-label">Scope Display</summary>
+        <div id="scope-hint">A blank shape here - like a green screen - that a live game-rendered view gets projected onto in-game, filling this same shape/bounds. Resize it with its drag handles or Uniform Scale below; there's nothing more to preview here since the actual content depends on live server state.</div>
+        <label>Shape
+          <select id="insp-scope-shape">
+            <option value="circle">Circular</option>
+            <option value="rectangle">Rectangular</option>
+          </select>
+        </label>
+        <label>Display Channel <input type="text" id="insp-scope-channel" list="scope-channels-datalist" placeholder="e.g. sonar"></label>
+        <label>Fill % <input type="number" id="insp-scope-fill" min="0.1" max="1" step="0.01" value="0.95"></label>
+        <div id="insp-scope-navmap-range-field" hidden>
+          <label>Range (world units) <input type="number" id="insp-scope-navmap-range" min="1" step="1" value="300"></label>
+        </div>
+        <div id="insp-scope-sonar-range-field" hidden>
+          <label>Range (world units) <input type="number" id="insp-scope-sonar-range" min="1" step="1" value="200"></label>
+          <div id="sonar-range-hint">Match this to the server's sonar_max_range - a contact plots closer to center the nearer it actually is, instead of always sitting right at the rim.</div>
+          <label>Pulse Speed Scale <input type="number" id="insp-scope-sonar-pulse-speed" min="0.01" step="0.01" value="0.25"></label>
+          <div id="sonar-pulse-speed-hint">Shrinks sonar.pulse_hz for the ring animation, same idea as a Wobble gauge's Speed Scale - keeps the scope's own pulse feel consistent with any gauge wired to the same value.</div>
+        </div>
+        <div id="insp-scope-tdc-fields" hidden>
+          <label>Range (world units) <input type="number" id="insp-scope-tdc-range" min="1" step="1" value="1000"></label>
+          <div id="tdc-range-hint">Match this to the server's torpedo_speed * (torpedo_max_lifetime_ticks / 60) - a torpedo's full possible run distance, plotted out to the scope's own rim.</div>
+          <label>Speed (world units/sec) <input type="number" id="insp-scope-tdc-speed" min="1" step="1" value="20"></label>
+          <div id="tdc-speed-hint">Match this to the server's torpedo_speed - needed together with Turn Rate below to work out how many degrees a torpedo turns per world unit traveled.</div>
+          <label>Turn Rate&deg;/sec (at full gyro) <input type="number" id="insp-scope-tdc-turn-rate" min="1" step="1" value="45"></label>
+          <div id="tdc-turn-rate-hint">Match this to the server's torpedo_turn_rate - the CONTINUOUS turn rate a torpedo holds for the rest of its flight once fired at full Gyro Limit (below). A torpedo never straightens out on its own; smaller gyro settings turn proportionally slower, not for less time.</div>
+          <label>Gyro Activation Distance <input type="number" id="insp-scope-tdc-activation-distance" min="0" step="1" value="50"></label>
+          <div id="tdc-activation-distance-hint">Match this to the server's torpedo_gyro_activation_distance - how far a torpedo runs straight before the continuous curve above begins.</div>
+          <label>Gyro Limit&deg; <input type="number" id="insp-scope-tdc-gyro-limit" min="1" step="1" value="90"></label>
+          <div id="tdc-gyro-limit-hint">Match this to the server's tdc_gyro_limit - the gyro/spread setting that produces the full Turn Rate above; other settings turn proportionally slower.</div>
+        </div>
+        <div id="insp-scope-periscope-fields" hidden>
+          <label>Field of View&deg; <input type="number" id="insp-scope-periscope-fov" min="1" max="180" step="1" value="20"></label>
+          <div id="periscope-fov-hint">Total angular width visible at once, centered on periscope.bearing - narrow (like a real scope's magnification) means a contact only appears once the bearing dial is swept close to it, same "sweep to find it" feel as sonar.</div>
+          <label>Reference Distance (world units) <input type="number" id="insp-scope-periscope-reference-distance" min="1" step="1" value="500"></label>
+          <div id="periscope-reference-distance-hint">A contact at exactly this distance draws at the silhouette's authored base size; closer draws bigger, farther draws smaller - purely a rendering scale, not sent to or read from the server.</div>
+        </div>
+      </details>
+
+      <details id="insp-zone-section" hidden>
+        <summary class="section-label">Zone</summary>
+        <label>Radius <input type="number" id="insp-zone-radius" min="1"></label>
+        <div id="zone-point-count"></div>
+      </details>
+
+      <details id="insp-spawn-section" hidden>
+        <summary class="section-label">Player Spawn</summary>
+        <div id="spawn-hint">Invisible in-game - a marker for where an avatar should appear. Rotation sets facing.</div>
+        <label>Spawn Type
+          <select id="insp-spawn-type">
+            <option value="room_enter">Room Enter Spawn</option>
+            <option value="station_link">Station Link</option>
+          </select>
+        </label>
+        <div id="insp-spawn-station-field" hidden>
+          <label>Station
+            <select id="insp-spawn-station-target"></select>
+          </label>
+        </div>
+      </details>
+
+      <details id="insp-interaction-section">
+        <summary class="section-label">Interaction</summary>
+        <label>Type
+          <select id="insp-interaction">
+            <option value="none">None</option>
+            <option value="click">Click</option>
+            <option value="drag_linear">Drag (Linear)</option>
+            <option value="drag_rotate">Drag (Rotate)</option>
+            <option value="drag_h_pattern">Drag (H-Pattern)</option>
+            <option value="open_station">Open Station</option>
+          </select>
+        </label>
+
+        <div id="insp-hitbox-section" hidden>
+          <div class="section-label">Touch Hitbox</div>
+          <div id="hitbox-hint">Auto-generated when this became interactive - the tap/drag target, independent of the visual size.</div>
+          <div class="row">
+            <label>Width <input type="number" id="insp-hitbox-width" min="1"></label>
+            <label>Height <input type="number" id="insp-hitbox-height" min="1"></label>
+          </div>
+          <label><input type="checkbox" id="insp-hitbox-uniform"> Uniform Scale (link Width/Height)</label>
+          <label><input type="checkbox" id="insp-hitbox-follow-scale"> Follow Object Scale (resizing the object also resizes its hitbox)</label>
+          <div class="row">
+            <label>Offset X <input type="number" id="insp-hitbox-offset-x"></label>
+            <label>Offset Y <input type="number" id="insp-hitbox-offset-y"></label>
+          </div>
+        </div>
+
+        <div id="insp-linear-fields" hidden>
+          <label>Axis
+            <select id="insp-axis">
+              <option value="vertical">Vertical</option>
+              <option value="horizontal">Horizontal</option>
+            </select>
+          </label>
+        </div>
+        <div class="row" id="insp-range-fields" hidden>
+          <label>Min <input type="number" id="insp-min"></label>
+          <label>Max <input type="number" id="insp-max"></label>
+        </div>
+        <label id="insp-reverse-field" hidden><input type="checkbox" id="insp-reverse"> Reverse</label>
+
+        <label id="insp-deadzone-field" hidden>Deadzone % <input type="number" id="insp-deadzone" min="0" max="50" step="1" value="0"></label>
+        <div id="deadzone-hint" hidden>Middle N% of the handle's own travel range that counts as exactly centered - lets a player release a spring-loaded control near-but-not-exactly center and still get a clean zero, instead of a tiny stray value. 0 disables it.</div>
+        <label id="insp-spring-center-field" hidden><input type="checkbox" id="insp-spring-center"> Spring to Center on Release</label>
+        <div id="spring-center-hint" hidden>For a steering-wheel/joystick-style control: the handle snaps back to its exact center (sending the value at the midpoint of Min/Max, e.g. 0 for a -1 to 1 range) the instant it's released, instead of staying wherever it was let go. Pair with a nonzero Deadzone above so it reliably lands on a clean center value.</div>
+
+        <label id="insp-snap-field" hidden><input type="checkbox" id="insp-snap-enabled"> Snap Positions</label>
+        <div id="insp-snap-steps-field" hidden>
+          <label>Steps <input type="number" id="insp-snap-steps" min="2" max="20" value="3"></label>
+          <div id="snap-stops-readout"></div>
+          <div id="snap-stops-hint">Drag the points along the path on the canvas to fine-tune each stop.</div>
+        </div>
+
+        <div id="insp-drag-rotate-fields" hidden>
+          <div class="row">
+            <label>Visual Rotation Min&deg; <input type="number" id="insp-drag-rot-min"></label>
+            <label>Visual Rotation Max&deg; <input type="number" id="insp-drag-rot-max"></label>
+          </div>
+          <label><input type="checkbox" id="insp-drag-infinite"> Infinite Rotation (no end stops)</label>
+          <div id="drag-infinite-hint">For a compass-style dial that can spin through any number of full turns instead of stopping at its Visual Rotation Min/Max - the real game value still wraps within Min/Max above (e.g. 0-360) instead of clamping.</div>
+        </div>
+        <div id="insp-drag-linear-fields" hidden>
+          <div class="row">
+            <label>Visual Travel Min <input type="number" id="insp-drag-travel-min"></label>
+            <label>Visual Travel Max <input type="number" id="insp-drag-travel-max"></label>
+          </div>
+        </div>
+        <div id="insp-drag-preview-field" hidden>
+          <label>Preview <input type="range" id="insp-drag-preview" min="0" max="1" step="0.01" value="0"></label>
+        </div>
+
+        <div id="insp-station-target-field" hidden>
+          <label>Target Station
+            <select id="insp-station-target"></select>
+          </label>
+        </div>
+
+        <div id="insp-hpattern-fields" hidden>
+          <div id="hpattern-hint">Drag a node on canvas to reposition it. Use the "Connect" buttons below each node to link/unlink it with any other node - or, on canvas, click a node to set it as the anchor then shift-click another to connect/disconnect it (shift-click again to toggle back). Value can be a number or a string (e.g. forward).</div>
+          <button id="hpattern-add-node-btn">+ Add Node</button>
+          <div id="hpattern-node-list"></div>
+        </div>
+      </details>
+
+      <details id="insp-output-section">
+        <summary class="section-label">Output (Gauge / Wired Display)</summary>
+        <label>Type
+          <select id="insp-output-type">
+            <option value="none">None</option>
+            <option value="rotate">Rotate (Needle)</option>
+            <option value="linear">Linear (Slider)</option>
+            <option value="texture">Texture Swap (Toggle)</option>
+          </select>
+        </label>
+        <div id="insp-output-fields" hidden>
+          <label>Value Binding <input type="text" id="insp-output-binding" list="server-state-paths-datalist" placeholder="e.g. speed"></label>
+          <div class="row" id="insp-output-range-field">
+            <label>Value Min <input type="number" id="insp-output-min"></label>
+            <label>Value Max <input type="number" id="insp-output-max"></label>
+          </div>
+          <div id="insp-output-rotate-fields" hidden>
+            <div class="row">
+              <label>Rotation Min&deg; <input type="number" id="insp-output-rot-min"></label>
+              <label>Rotation Max&deg; <input type="number" id="insp-output-rot-max"></label>
+            </div>
+            <label>Smoothing (seconds) <input type="number" id="insp-output-smoothing" min="0" step="0.05" value="0.25"></label>
+            <div id="smoothing-hint">The needle eases toward a new reading over roughly this many seconds instead of snapping to it every update - real analog needles have inertia. 0 disables smoothing for a gauge that should react instantly.</div>
+            <label>Wobble Binding (optional) <input type="text" id="insp-output-wobble-binding" list="server-state-paths-datalist" placeholder="e.g. sonar.pulse_hz"></label>
+            <div class="row">
+              <label>Wobble Amplitude&deg; <input type="number" id="insp-output-wobble-amplitude" min="0" step="0.5" value="8"></label>
+              <label>Wobble Speed Scale <input type="number" id="insp-output-wobble-speed-scale" min="0.01" step="0.01" value="0.25"></label>
+            </div>
+            <div id="wobble-hint">Makes the needle shiver around its Value Binding position at a rate read from a second binding (e.g. sonar.pulse_hz) - one gauge shows both an amplitude (where it points) and a frequency (how fast it shivers) at once. Speed Scale shrinks the real Hz value for the animation - a raw 0.5-3 Hz sonar pulse rate would otherwise be too fast to read as a rate by eye; lower this further if it's still too quick to perceive.</div>
+          </div>
+          <div id="insp-output-linear-fields" hidden>
+            <label>Axis
+              <select id="insp-output-axis">
+                <option value="vertical">Vertical</option>
+                <option value="horizontal">Horizontal</option>
+              </select>
+            </label>
+            <div class="row">
+              <label>Travel Min <input type="number" id="insp-output-travel-min"></label>
+              <label>Travel Max <input type="number" id="insp-output-travel-max"></label>
+            </div>
+          </div>
+          <div id="insp-output-texture-fields" hidden>
+            <label>Flipped Texture
+              <select id="insp-output-alt-asset"></select>
+            </label>
+            <div id="texture-hint">Shows the normal texture (above) when off, this one when the bound value is true/on.</div>
+          </div>
+          <label id="insp-output-preview-field">Preview <input type="range" id="insp-output-preview" min="0" max="1" step="0.01" value="0"></label>
+          <label id="insp-output-preview-toggle-field" hidden><input type="checkbox" id="insp-output-preview-toggle"> Preview Flipped</label>
+        </div>
+      </details>
+
+      <details id="insp-states-section">
+        <summary class="section-label">Visual States</summary>
+        <label><input type="checkbox" id="insp-states-enabled"> Enable States</label>
+        <div id="insp-states-fields" hidden>
+          <label>State Binding <input type="text" id="insp-state-binding" list="server-state-paths-datalist" placeholder="e.g. fuse_state"></label>
+          <div id="states-list"></div>
+          <button id="add-state-btn">+ Add State</button>
+          <label>Preview State
+            <select id="insp-state-preview"></select>
+          </label>
+        </div>
+      </details>
+
+      <div id="insp-binding-section">
+        <details id="insp-binding-field">
+          <summary class="section-label">Input Binding</summary>
+          <label><span id="insp-binding-label">Binding</span> <input type="text" id="insp-binding" list="server-actions-datalist" placeholder="e.g. SET_RUDDER"></label>
+          <div id="insp-binding-hint"></div>
+
+          <label id="insp-toggle-enabled-field" hidden><input type="checkbox" id="insp-toggle-enabled"> Toggle Switch (on/off, two visual states)</label>
+          <div id="insp-toggle-fields" hidden>
+            <div id="toggle-hint">Binding above fires when turning the switch ON. State Binding is the live boolean that says which state is currently active.</div>
+            <label>State Binding (boolean) <input type="text" id="insp-toggle-state-binding" list="server-state-paths-datalist" placeholder="e.g. engine.running"></label>
+            <label><input type="checkbox" id="insp-toggle-single-binding"> Same action turns it on and off</label>
+            <div id="toggle-single-binding-hint">On: sends the Binding above with Payload Key set to true/false (e.g. SET_ELECTRIC_MOTOR / active) - just the one action to fill in. Off: for two separate actions instead (e.g. START_ENGINE / STOP_ENGINE), fill in the OFF Binding below too.</div>
+            <label id="insp-toggle-off-binding-field">OFF Binding <input type="text" id="insp-toggle-off-binding" list="server-actions-datalist" placeholder="e.g. STOP_ENGINE"></label>
+            <label>Default State
+              <select id="insp-toggle-default-state">
+                <option value="false">OFF</option>
+                <option value="true">ON</option>
+              </select>
+            </label>
+            <div class="row toggle-state-row">
+              <div class="toggle-state-col">
+                <div class="toggle-state-col-label">ON</div>
+                <label>Texture <select id="insp-toggle-on-texture"></select></label>
+                <label>Rotation&deg; <input type="number" id="insp-toggle-on-rotation" step="15" value="0"></label>
+              </div>
+              <div class="toggle-state-col">
+                <div class="toggle-state-col-label">OFF</div>
+                <label>Texture <select id="insp-toggle-off-texture"></select></label>
+                <label>Rotation&deg; <input type="number" id="insp-toggle-off-rotation" step="15" value="0"></label>
+              </div>
+            </div>
+            <div id="toggle-rotation-hint">Rotation is added on top of the object's own Rotation, per state - e.g. reuse the same "up" sprite for OFF and give ON a Rotation of 180&deg; instead of needing a second, flipped texture.</div>
+          </div>
+
+          <label>Payload Key <input type="text" id="insp-payload-key" placeholder="value"></label>
+          <div id="payload-key-hint">The JSON key this control's value is sent under - almost always "value"; picking a known Binding above fills this in automatically when it needs something else (e.g. SET_GEAR expects "gear").</div>
+
+          <div class="row">
+            <label>Extra Payload Key <input type="text" id="insp-extra-payload-key" placeholder="e.g. tube"></label>
+            <label>Extra Payload Value <input type="text" id="insp-extra-payload-value" placeholder="e.g. 0"></label>
+          </div>
+          <div id="extra-payload-hint">For an action needing a SECOND fixed field alongside the control's own value - e.g. SET_TUBE_ARMED needs {tube: 0, armed: true|false}: Payload Key = armed (the control's own on/off), Extra Payload Key = tube, Extra Payload Value = 0 (fixed per instance - arm tube 1 with a different object per tube, each with its own Extra Payload Value). Leave Extra Payload Key blank for anything that only needs the one Payload Key above. A number-looking value is sent as a number, otherwise as a string.</div>
+        </details>
+
+        <details>
+          <summary class="section-label">Notes</summary>
+          <textarea id="insp-notes" rows="2"></textarea>
+        </details>
+      </div>
+
+      <details id="insp-prefab-section">
+        <summary class="section-label">Prefab</summary>
+        <div id="prefab-linked-info"></div>
+        <div class="row">
+          <button id="save-prefab-btn">Save as Prefab</button>
+        </div>
+        <div class="row">
+          <button id="push-prefab-btn" hidden>Push Appearance</button>
+          <button id="unlink-prefab-btn" hidden>Unlink</button>
+        </div>
+      </details>
+
+      <div class="row">
+        <button id="ungroup-btn" hidden>Ungroup</button>
+        <button id="duplicate-btn">Duplicate</button>
+        <button id="delete-btn">Delete</button>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<datalist id="server-actions-datalist"></datalist>
+<datalist id="server-state-paths-datalist"></datalist>
+<datalist id="scope-channels-datalist">
+  <option value="sonar">
+  <option value="nav_map">
+  <option value="tdc">
+  <option value="periscope">
+  <option value="weatherdeck">
+</datalist>
+
+<script src="server-bindings.js"></script>
+<script src="editor.js"></script>
+</body>
+</html>

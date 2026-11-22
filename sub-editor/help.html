@@ -1,0 +1,787 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Sub Editor - Reference</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: monospace;
+    background: #111;
+    color: #eee;
+    margin: 0;
+  }
+  a { color: #6fc3ff; }
+  code {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-radius: 3px;
+    padding: 1px 5px;
+    color: #b5f3c0;
+  }
+  /* Persistent top bar for jumping between this reference, the Binding
+     Sheet, and the editor itself - stays visible regardless of scroll
+     position in either the sidebar or the main content below. */
+  .page-nav {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    gap: 18px;
+    padding: 0 16px;
+    background: #1a1a1a;
+    border-bottom: 1px solid #333;
+  }
+  .page-nav a {
+    color: #ccc;
+    text-decoration: none;
+    font-size: 13px;
+  }
+  .page-nav a:hover { color: #4caf50; }
+  .page-nav a.current {
+    color: #4caf50;
+    font-weight: bold;
+    pointer-events: none;
+  }
+  .page-body {
+    display: flex;
+    align-items: flex-start;
+  }
+  nav {
+    position: sticky;
+    top: 40px;
+    width: 250px;
+    flex-shrink: 0;
+    height: calc(100vh - 40px);
+    overflow-y: auto;
+    background: #161616;
+    border-right: 1px solid #333;
+    padding: 16px 12px;
+  }
+  nav .nav-title {
+    color: #4caf50;
+    font-weight: bold;
+    font-size: 14px;
+    margin-bottom: 12px;
+  }
+  nav ul {
+    list-style: none;
+    margin: 0 0 14px;
+    padding: 0;
+  }
+  nav ul.sub {
+    margin: 2px 0 8px 10px;
+    padding-left: 8px;
+    border-left: 1px solid #333;
+  }
+  nav li { margin: 3px 0; }
+  nav a {
+    text-decoration: none;
+    color: #ccc;
+    font-size: 12px;
+  }
+  nav a:hover { color: #4caf50; }
+  main {
+    flex: 1;
+    min-width: 0;
+    max-width: 900px;
+    padding: 32px 40px 120px;
+  }
+  h1 { color: #4caf50; margin-top: 0; }
+  h2 {
+    color: #4caf50;
+    border-bottom: 1px solid #333;
+    padding-bottom: 6px;
+    margin-top: 48px;
+  }
+  h3 { color: #9ccc65; margin-top: 28px; }
+  h4 { color: #ddd; margin-bottom: 4px; }
+  p { line-height: 1.5; }
+  .lede {
+    color: #aaa;
+    font-size: 15px;
+  }
+  .callout {
+    background: #1a1a1a;
+    border: 1px solid #333;
+    border-left: 3px solid #4caf50;
+    border-radius: 4px;
+    padding: 10px 14px;
+    margin: 14px 0;
+    font-size: 13px;
+  }
+  .callout.warn { border-left-color: #e53935; }
+  .example {
+    background: #14181a;
+    border: 1px solid #2a3a30;
+    border-radius: 4px;
+    padding: 12px 16px;
+    margin: 12px 0;
+  }
+  .example .example-title {
+    color: #ffca28;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    margin-bottom: 8px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 12px 0;
+    font-size: 13px;
+  }
+  th, td {
+    border: 1px solid #333;
+    padding: 6px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+  th {
+    background: #1a1a1a;
+    color: #9ccc65;
+  }
+  tr:nth-child(even) td { background: #151515; }
+  .field { color: #ffca28; }
+  .top-link {
+    display: inline-block;
+    margin-top: 8px;
+    font-size: 11px;
+    color: #666;
+  }
+</style>
+</head>
+<body>
+
+<div class="page-nav">
+  <a href="index.html">&larr; Sub Editor</a>
+  <a href="help.html" class="current">Help / Docs</a>
+  <a href="binding-sheet.html">Binding Sheet</a>
+</div>
+
+<div class="page-body">
+<nav>
+  <div class="nav-title">SUB EDITOR REFERENCE</div>
+  <ul>
+    <li><a href="#overview">Overview &amp; Workflow</a></li>
+    <li><a href="#rooms-stations-layers">Rooms, Stations &amp; Layers</a>
+      <ul class="sub">
+        <li><a href="#rooms">Rooms</a></li>
+        <li><a href="#stations">Stations</a></li>
+        <li><a href="#layers">Layers</a></li>
+      </ul>
+    </li>
+    <li><a href="#object-types">Object Types</a>
+      <ul class="sub">
+        <li><a href="#type-decoration">Decoration / Station / Control / Tool Target</a></li>
+        <li><a href="#type-group">Group</a></li>
+        <li><a href="#type-player-spawn">Player Spawn</a></li>
+        <li><a href="#type-scope">Scope</a></li>
+        <li><a href="#type-zone">Leak Zone / Fire Zone</a></li>
+        <li><a href="#type-indicator">Indicator Light (preset)</a></li>
+      </ul>
+    </li>
+    <li><a href="#transform">Transform: Position, Rotation, Scale, Pivot</a></li>
+    <li><a href="#interaction">Interaction Types</a>
+      <ul class="sub">
+        <li><a href="#interaction-click">Click</a></li>
+        <li><a href="#interaction-drag-linear">Drag (Linear)</a></li>
+        <li><a href="#interaction-drag-rotate">Drag (Rotate)</a></li>
+        <li><a href="#interaction-drag-hpattern">Drag (H-Pattern)</a></li>
+        <li><a href="#interaction-open-station">Open Station</a></li>
+        <li><a href="#hitbox">Touch Hitbox</a></li>
+      </ul>
+    </li>
+    <li><a href="#output">Output (Gauge / Wired Display)</a>
+      <ul class="sub">
+        <li><a href="#output-rotate">Rotate (Needle)</a></li>
+        <li><a href="#output-linear">Linear (Slider)</a></li>
+        <li><a href="#output-texture">Texture Swap (Toggle)</a></li>
+      </ul>
+    </li>
+    <li><a href="#visual-states">Visual States</a></li>
+    <li><a href="#toggle-switch">Toggle Switch Shortcut</a></li>
+    <li><a href="#bindings">Bindings &amp; Payload Keys</a></li>
+    <li><a href="#prefabs">Prefabs</a></li>
+    <li><a href="#backup">Project Backup &amp; the Assets Folder</a></li>
+    <li><a href="#export">Export &amp; Import</a></li>
+    <li><a href="#validate">Validate</a></li>
+  </ul>
+</nav>
+
+<main>
+
+<h1>Sub Editor Reference</h1>
+<p class="lede">
+  Everything the inspector's fields actually do, object type by object type,
+  with worked examples. This is a reference, not a tutorial - jump to
+  whatever section matches what you're building via the sidebar.
+</p>
+
+<div class="callout">
+  See also: <code>ClaudeDocs/Master Design Doc Rev1 Core Principles.md</code>
+  for the compartment/station/tool interaction model this editor's output is
+  meant to support in-game, and <code>ClaudeDocs/Sub Editor.md</code> for the
+  original design brainstorm this tool grew out of.
+</div>
+
+<h2 id="overview">Overview &amp; Workflow</h2>
+<p>
+  The Sub Editor produces plain JSON room layouts. Each object in a room
+  declares four things and nothing else: <strong>what it looks like</strong>
+  (a sprite or a plain shape), <strong>where it is</strong> (position,
+  rotation, scale), <strong>how a player interacts with it</strong> (click,
+  drag, or nothing), and <strong>what game value it reads or writes</strong>
+  (a Binding to send, a State/Output Binding to read back). It never contains
+  game logic - the actual submarine game client (<code>client/</code>) loads
+  the exported JSON and does the simulating.
+</p>
+<p>The normal workflow:</p>
+<ol>
+  <li>Point <strong>Choose Assets Folder...</strong> at a folder of PNGs (or use <strong>Load Images...</strong> to pick files by hand). One level of subfolders becomes asset categories automatically.</li>
+  <li>Drag an asset from the Asset Library onto the canvas, or use one of the <strong>ADD</strong> buttons (Placeholder Object, Player Spawn, Scope Object, Indicator Light) for something that isn't a sprite yet.</li>
+  <li>Select it and configure it in the Inspector on the right: transform, interaction, output, visual states, binding.</li>
+  <li>Repeat for every control/gauge/decoration a room needs. Group related pieces (Ctrl+G) and save frequently-reused ones as Prefabs.</li>
+  <li><strong>Export Room</strong> (or <strong>Export All Rooms</strong>) to produce the JSON the game client loads.</li>
+</ol>
+<p>
+  <strong>Assets vs. Objects:</strong> an asset is just an image file sitting
+  in the library. An object is a thing placed in a room, referencing an
+  asset (or a plain color) plus everything above. The same asset
+  (<code>lever_body.png</code>) can back many different objects with
+  different bindings, ranges, and rotations.
+</p>
+<p>
+  <strong>Removing old/redundant assets:</strong> the <span class="field">&#128465;</span>
+  button on an asset's own row (or <strong>Delete</strong> in the bulk-select
+  bar, after selecting several with shift-click) permanently removes it from
+  the library. If anything still references it, you'll be warned before
+  deleting - a removed asset's id just stops resolving afterward, so any
+  object/prefab still pointing at it falls back to its plain colored shape
+  rather than breaking. Not covered by Undo, so use
+  <a href="#backup">Save Project Backup</a> first if unsure.
+</p>
+
+<h2 id="rooms-stations-layers">Rooms, Stations &amp; Layers</h2>
+
+<h3 id="rooms">Rooms</h3>
+<p>
+  A room is a compartment (<em>Forward Torpedo</em>, <em>Information</em>,
+  <em>Control Room</em>, <em>Engineering</em> by default - add more with
+  <strong>+ New Room</strong>). Switch rooms with the <strong>Room</strong>
+  dropdown in the top bar. A room's own object list is what a player sees
+  looking around that compartment - stations are selected from there, not
+  shown inline.
+</p>
+
+<h3 id="stations">Stations</h3>
+<p>
+  A station (Helm, Sonar, the Torpedo Data Computer, ...) is its own
+  separate object list, a full peer of the room's compartment view - not a
+  sub-area of it. Switch between "editing the compartment" and "editing one
+  station's own screen" with the <strong>View</strong> dropdown next to
+  Room. <strong>+ New Station</strong> prompts for a display name and
+  derives an ID from it (e.g. "Sonar" &rarr; <code>station_sonar</code>);
+  <strong>Rename Station</strong> lets you separately edit the display name
+  and the ID (the ID is what the game client/server actually key off of, so
+  it has to match exactly what they expect - some real station IDs
+  intentionally skip the <code>station_</code> prefix, like
+  <code>nav_map</code> or <code>torpedo_tube</code>).
+</p>
+<div class="example">
+  <div class="example-title">Example</div>
+  Building the Torpedo Data Computer screen: set Room to "Forward Torpedo",
+  then View to "Torpedo Tube" (or create it via + New Station if it doesn't
+  exist yet). Everything you place now - the TDC scope, the gyro/spread
+  dials, the tube arm lights - lives on that station's own screen, separate
+  from whatever decorations sit in the Forward Torpedo compartment itself.
+</div>
+
+<h3 id="layers">Layers</h3>
+<p>
+  Layers group objects within one room/station for organization, selective
+  hiding, and export optimization. Every container starts with a
+  <code>default</code> layer. <strong>+ New Layer</strong> adds another;
+  unchecking a layer's visibility checkbox both hides it and drops any of
+  its objects out of the current selection (effectively locking it against
+  accidental edits). Checking <strong>Flatten on Export</strong> for a layer
+  rasterizes every object on it into one baked image at export time - useful
+  for static background/decoration layers with many small pieces, since the
+  game client then draws one image instead of dozens of separate draw calls.
+  Flattening only ever affects the exported JSON, never the live editor
+  view.
+</p>
+
+<h2 id="object-types">Object Types</h2>
+
+<h3 id="type-decoration">Decoration / Station / Control / Tool Target</h3>
+<p>
+  The Object Type dropdown (Decoration, Station, Control, Tool Target)
+  is presentational bookkeeping for your own organization - none of these
+  four values change what fields are available or how the object behaves.
+  What actually determines behavior is the object's <a href="#interaction">Interaction</a>
+  and <a href="#output">Output</a> settings below, independent of this
+  dropdown. Everything you drag from the Asset Library or add as a
+  Placeholder starts as <code>decoration</code>.
+</p>
+
+<h3 id="type-group">Group</h3>
+<p>
+  Select 2+ objects and press Ctrl+G (or the Group button in the multi-select
+  panel) to combine them into one Group object, positioned at their combined
+  center. Double-click a group on canvas to enter <strong>Object Edit
+  Mode</strong> - everything else dims and locks while you reposition the
+  group's own pieces - then <strong>&larr; Back to Room</strong> to
+  recollapse it. Groups can be saved as <a href="#prefabs">Prefabs</a> too.
+</p>
+
+<h3 id="type-player-spawn">Player Spawn</h3>
+<p>
+  Invisible in the actual game - just a position + facing marker for where
+  a player's avatar should appear. <strong>Spawn Type</strong> is either
+  <em>Room Enter Spawn</em> (where a player appears on entering this room)
+  or <em>Station Link</em> (where their avatar stands when they open a
+  particular station - pick which one via the Station dropdown that
+  appears). Rotation sets which way the avatar faces.
+</p>
+
+<h3 id="type-scope">Scope</h3>
+<p>
+  A scope object is a blank shape in the editor - like a green screen - that
+  a fully server-driven live display gets projected onto in-game, filling
+  the object's own bounds. There's nothing to preview here since the real
+  content depends on live server state; you're only authoring its position,
+  size, and shape.
+</p>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td class="field">Shape</td><td>Circular or Rectangular - clips the live content to that shape.</td></tr>
+  <tr><td class="field">Display Channel</td><td>Which live view to project: <code>sonar</code>, <code>nav_map</code>, <code>tdc</code>, <code>periscope</code>, or <code>weatherdeck</code> (the last one currently renders a "NOT YET IMPLEMENTED" placeholder in-game). Free text with autocomplete, not a fixed dropdown, so a new channel can be added on the client side without an editor change.</td></tr>
+  <tr><td class="field">Fill %</td><td>How much of the object's own width/height the live content actually fills (0.1-1) - leaves a border of whatever's behind it otherwise.</td></tr>
+  <tr><td class="field">Range (nav_map)</td><td>World units from the ship shown at the scope's outer edge - match this to how zoomed in/out the chart should read.</td></tr>
+  <tr><td class="field">Range (sonar)</td><td>World units at the scope's outer edge - match this to the server's own <code>sonar_max_range</code> export so a contact plots closer to center the nearer it actually is. A rotating compass ring (ticks every 10&deg;, labeled every 30&deg;, N/E/S/W at the cardinals) runs around the inside of the rim - the numbers stay clean true-compass values while the ring itself turns as the sub's heading changes, same gyrocompass-repeater-card convention as a real sonar/periscope readout (the lubber line at top - dead ahead - stays fixed; the card underneath rotates).</td></tr>
+  <tr><td class="field">Pulse Speed Scale (sonar)</td><td>Shrinks <code>sonar.pulse_hz</code> for the ring-pulse animation, same idea as an Output gauge's Wobble Speed Scale below - keeps the scope's pulse feel consistent with any gauge wired to the same value.</td></tr>
+  <tr><td class="field">Range / Speed / Turn Rate / Gyro Activation Distance / Gyro Limit (tdc)</td><td>The Torpedo Data Computer's predicted-path plot - a full circle, with the sub inset near the bottom rim rather than dead center so the plotted range can use almost the full diameter; tracks only ever appear in the top portion since the gyro can't aim past +/-Gyro Limit. A torpedo is aimed by a CONTINUOUS gyro deflection, not a target heading it turns to and stops at: past Gyro Activation Distance it holds a constant turn (like a rudder held at a fixed angle) for the rest of its flight, at Turn Rate scaled by how far its own gyro/spread setting sits within +/-Gyro Limit - it never straightens out on its own. These five match the server's <code>torpedo_speed</code> * (<code>torpedo_max_lifetime_ticks</code> / 60), <code>torpedo_speed</code>, <code>torpedo_turn_rate</code>, <code>torpedo_gyro_activation_distance</code>, and <code>tdc_gyro_limit</code> exports respectively - keep them in sync if those are retuned. Reads live <code>tdc</code> (gyro_angle/spread_angle) and <code>torpedo_tubes</code> state to draw one predicted track per tube, bright for armed tubes, plus a yellow dot for each actually-fired torpedo still in flight (from the top-level <code>torpedoes</code> broadcast's bearing_relative/distance - the same live markers the <code>nav_map</code> channel shows, just plotted bow-relative instead of on the compass chart).</td></tr>
+  <tr><td class="field">Field of View&deg; / Reference Distance (periscope)</td><td>A flat horizon-strip stand-in for the eventual full 3D periscope view, drawn to fit its CIRCULAR port (not the full rectangular bounding box - anything near a corner would fall outside the actual visible ellipse). Sky/sea gradient, a horizon line, an absolute compass bearing centered near the top (degrees plus the nearest of the 8 compass points, e.g. <code>302NW</code>), a relative bearing centered near the bottom (degrees off the sub's own bow plus its quadrant - <code>SB</code> starboard bow, <code>SA</code> starboard aft, <code>PA</code> port aft, <code>PB</code> port bow, e.g. <code>045SB</code>), and a scaled silhouette for every optically-visible ship (any convoy) that currently falls within Field of View of the look direction - a convoy can show several silhouettes at once, side by side, not just one. A torpedo hit doesn't make a ship vanish outright: it triggers a brief explosion flash (client-local, one-shot) and the ship then spends several seconds (the server's <code>ship_sink_duration</code>) tilting and settling lower before finally disappearing, driven by that contact's own <code>sinking</code>/<code>sink_progress</code> fields so every viewer sees the same animation in sync. <code>periscope.bearing</code> itself turns right along with the sub's own heading for free, same as a real periscope mounted to the hull - the bearing dial only changes the OFFSET off the bow, not the absolute direction directly. Field of View is the total angular width visible at once, centered on <code>periscope.bearing</code> - keep it narrow (a real scope is a zoomed, magnified view) so a contact only appears once the bearing dial is swept close to it, the same "sweep to find it" feel as sonar. It also responds to the same wheel-scroll/pinch zoom gesture every scope already supports (see the Navigation Map's own zoom/pan) - zooming in narrows the effective field of view AND enlarges contact silhouettes to match, real angular magnification rather than just spreading things across a tighter slice of screen. Reference Distance is a pure rendering scale (never sent to/from the server): a contact at exactly that distance draws at its authored base silhouette size, closer bigger, farther smaller. Deliberately reads only plain physical facts from the server (<code>periscope.available/bearing</code> plus a <code>contacts</code> list of type/bearing_true/distance, no precomputed screen position) so a future real 3D view can consume the exact same state - only this drawing function would ever need replacing.</td></tr>
+</table>
+<div class="example">
+  <div class="example-title">Example</div>
+  A circular sonar scope on the Sonar station: Shape = Circular, Display
+  Channel = <code>sonar</code>, Fill % = 0.95, Range = 200 (matching the
+  server's <code>sonar_max_range</code>).
+</div>
+<div class="example">
+  <div class="example-title">Example: TDC scope</div>
+  On a Torpedo Data Computer station (e.g. in the Conning Tower): Shape =
+  Circular, Display Channel = <code>tdc</code>, Range = 1000, Speed = 20,
+  Turn Rate = 45, Gyro Activation Distance = 50, Gyro Limit = 90 (matching
+  the server's current Torpedo export defaults).
+</div>
+<div class="example">
+  <div class="example-title">Example: Attack Periscope</div>
+  On the Attack Periscope station (Conning Tower): Shape = Rectangular,
+  Display Channel = <code>periscope</code>, Field of View = 20, Reference
+  Distance = 500. Bind a Drag (Rotate) control's Binding to
+  <code>SET_PERISCOPE_TURN</code> (Value Min -1 / Max 1) - unlike the Sonar
+  dial, this is steering-wheel style: the handle's deflection is a held turn
+  RATE, not an absolute bearing, so also check Spring to Center on Release
+  and set a small Deadzone (both in the Interaction section) so the scope
+  keeps turning while the handle is held over and stops cleanly the instant
+  it's let go.
+</div>
+
+<h3 id="type-zone">Leak Zone / Fire Zone</h3>
+<p>
+  Not placed via the Object Type dropdown - use the <strong>Paint Leak
+  Zone</strong> / <strong>Paint Fire Zone</strong> tools instead (set Brush
+  Size first, then drag across the canvas; click the tool again or press
+  Escape to stop painting). Each stroke is one zone object: a growing list
+  of points plus a radius, defining where the server may spawn that kind of
+  damage. The <strong>Radius</strong> field in the inspector and the point
+  count are the only editable properties afterward. Toggle their visibility
+  in the editor (not in-game) via the META LAYERS checkboxes.
+</p>
+
+<h3 id="type-indicator">Indicator Light (preset)</h3>
+<p>
+  <strong>+ Indicator Light</strong> is a shortcut, not a distinct object
+  type - it drops an ordinary round object with <a href="#visual-states">Visual
+  States</a> pre-enabled and three starter colors (no textures needed):
+  <code>empty</code> (dull dark green), <code>loaded</code> (bright green),
+  and <code>armed</code> (bright red). Rename/add/recolor states afterward
+  exactly like any other object's states; the preset just saves the setup
+  steps for the common case of a small colored status light.
+</p>
+<div class="example">
+  <div class="example-title">Example: one light per torpedo tube</div>
+  Click + Indicator Light four times (one per tube). For each one, set
+  State Binding to that tube's own state path: <code>torpedo_tubes.0.state</code>,
+  <code>torpedo_tubes.1.state</code>, <code>torpedo_tubes.2.state</code>,
+  <code>torpedo_tubes.3.state</code>. Each light then independently shows
+  dark green/bright green/red as that specific tube goes from empty to
+  loaded to armed - no textures imported at all.
+</div>
+
+<h2 id="transform">Transform: Position, Rotation, Scale, Pivot</h2>
+<p>
+  Every non-zone object has <span class="field">X</span>/<span class="field">Y</span>
+  (world position within the 960&times;540 room), <span class="field">Rotation&deg;</span>,
+  and <span class="field">Scale X</span>/<span class="field">Scale Y</span>
+  (check <strong>Uniform Scale</strong> to link them so dragging one drags
+  both). <span class="field">Pivot X</span>/<span class="field">Pivot Y</span>
+  (0-1 each) sets the object's own rotation/scale origin and anchor point
+  within its own width/height: <code>0,0</code> is top-left, <code>0.5,0.5</code>
+  is center, <code>1,1</code> is bottom-right. Drag the orange dot shown on
+  a selected object to set it visually instead of typing numbers.
+</p>
+<div class="example">
+  <div class="example-title">Example</div>
+  A wall-mounted gauge needle should spin around its base, not its center:
+  set Pivot Y close to 1 (bottom) so Rotation sweeps the needle's tip
+  through an arc above its mount point instead of spinning in place.
+</div>
+<p>
+  Objects also carry a <strong>Placeholder Color</strong> and, for a round
+  object, the same circle/rectangle preview shape used by Scope and
+  Indicator Light objects - this is what renders (in-editor and in-game)
+  whenever the object has no sprite asset assigned, or whenever the active
+  Visual State has no sprite of its own (see <a href="#visual-states">Visual
+  States</a>).
+</p>
+
+<h2 id="interaction">Interaction Types</h2>
+<p>
+  Set via the <strong>Interaction &gt; Type</strong> dropdown. This is what
+  turns a static picture into something a player can operate.
+</p>
+
+<h3 id="interaction-click">Click</h3>
+<p>
+  A single tap/click fires the object's <a href="#bindings">Binding</a>
+  action once. Combine with <a href="#toggle-switch">Toggle Switch</a> below
+  for an on/off control instead of a one-shot trigger.
+</p>
+<div class="example">
+  <div class="example-title">Example</div>
+  A FIRE torpedo button: Interaction = Click, Binding = <code>FIRE_TORPEDO</code>
+  (a trigger action - no payload, no range fields needed).
+</div>
+
+<h3 id="interaction-drag-linear">Drag (Linear)</h3>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td class="field">Axis</td><td>Vertical or Horizontal - which direction the control physically slides.</td></tr>
+  <tr><td class="field">Min / Max</td><td>The real game value range sent to the server as the handle moves end to end.</td></tr>
+  <tr><td class="field">Reverse</td><td>Flips which physical end corresponds to Min vs. Max.</td></tr>
+  <tr><td class="field">Snap Positions</td><td>Quantizes the drag to a fixed number of evenly-spaced stops (Steps, 2-20) instead of a continuous range. Once generated, drag each stop's own point along the path on canvas to fine-tune it off the even spacing.</td></tr>
+  <tr><td class="field">Visual Travel Min/Max</td><td>How far the sprite itself physically slides on screen (in canvas units), independent of the Min/Max game-value range above - lets a handle travel 40px while sending 0-100 to the server, for instance.</td></tr>
+  <tr><td class="field">Preview</td><td>A slider that scrubs the control through its range in the editor without dragging it by hand, to check the artwork/travel look right.</td></tr>
+</table>
+<div class="example">
+  <div class="example-title">Example</div>
+  A throttle lever: Interaction = Drag (Linear), Axis = Vertical, Min = 0,
+  Max = 1, Binding = <code>SET_THROTTLE</code>, Visual Travel Min/Max set to
+  however far the handle should slide up the rail in canvas pixels.
+</div>
+
+<h3 id="interaction-drag-rotate">Drag (Rotate)</h3>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td class="field">Min / Max</td><td>The real game value range across the control's full sweep.</td></tr>
+  <tr><td class="field">Reverse</td><td>Flips rotation direction.</td></tr>
+  <tr><td class="field">Snap Positions</td><td>Same quantized-stops mechanism as Drag (Linear), spaced around the arc instead of along a line.</td></tr>
+  <tr><td class="field">Visual Rotation Min/Max&deg;</td><td>How far the sprite itself actually turns on screen, independent of the game-value Min/Max - e.g. a wheel that visually turns -120&deg; to +120&deg; while sending a rudder value of -1 to +1.</td></tr>
+  <tr><td class="field">Infinite Rotation</td><td>For a compass-style dial that can spin through any number of full turns with no end stops, instead of clamping at Visual Rotation Min/Max. The real game value still wraps within Min/Max (e.g. 0-360) rather than clamping.</td></tr>
+</table>
+<div class="example">
+  <div class="example-title">Example</div>
+  A rudder wheel: Interaction = Drag (Rotate), Min = -1, Max = 1, Visual
+  Rotation Min/Max = -120&deg;/120&deg;, Binding = <code>SET_RUDDER</code>.
+  A sonar tuning dial, by contrast, would check Infinite Rotation with Min =
+  0, Max = 360 and Binding = <code>SET_SONAR_DIAL</code>, so it can be spun
+  all the way around instead of stopping at an end.
+</div>
+
+<h3 id="interaction-drag-hpattern">Drag (H-Pattern)</h3>
+<p>
+  A free-form graph of named rest positions ("nodes"), each offset from the
+  object's own X/Y and each carrying whatever value gets sent to the server
+  when the control rests there - a number or a string (e.g. <code>forward</code>).
+  Not limited to a literal H shape: build any T/star/line layout the control
+  actually needs. <strong>+ Add Node</strong> adds one; drag a node on
+  canvas to reposition it. Click a node to set it as the anchor, then
+  shift-click another to connect/disconnect them (drawing the rails a player
+  can slide the handle along); shift-click the same pair again to toggle the
+  connection back off. The node marked with <code>*</code> is the control's
+  current resting position.
+</p>
+<div class="example">
+  <div class="example-title">Example</div>
+  An engine order telegraph with FULL/HALF/SLOW/STOP/REV positions: add five
+  nodes roughly along a vertical line, connect each to its neighbor so the
+  handle can only slide between adjacent positions, and set each node's
+  Value to the number or string <code>SET_ENGINE_ORDER</code> (or a gear
+  action) expects at that position.
+</div>
+
+<h3 id="interaction-open-station">Open Station</h3>
+<p>
+  Clicking the object opens a station's dedicated screen (the compartment
+  &rarr; station UI model). Pick which station via the <strong>Target
+  Station</strong> dropdown that appears - no Binding/Payload Key fields
+  apply here, since this doesn't send a game action, it just navigates the
+  local UI.
+</p>
+
+<h3 id="hitbox">Touch Hitbox</h3>
+<p>
+  Shown for any interaction type other than None. Auto-generated the first
+  time an object becomes interactive, padded out from the visual sprite
+  size (minimum ~44px, the standard mobile touch-target guideline) so a
+  tiny sprite still has a comfortably tappable target. <span class="field">Width</span>/<span class="field">Height</span>
+  and <span class="field">Offset X</span>/<span class="field">Offset Y</span>
+  let you enlarge or reposition the tap/drag target independently of how
+  big the artwork actually looks.
+</p>
+
+<h2 id="output">Output (Gauge / Wired Display)</h2>
+<p>
+  Independent of Interaction - an object can be purely an output (a gauge
+  with no interaction), purely an input (a lever with no output), or both at
+  once (a lever whose own handle also visually reflects the live server
+  value, in case another player moves it). Set via the <strong>Output &gt;
+  Type</strong> dropdown; every non-None type shares a
+  <span class="field">Value Binding</span> (a <a href="#bindings">state
+  path</a> read from the server) and <span class="field">Value Min</span>/<span class="field">Value Max</span>
+  (the real game-value range that maps onto the visual range below).
+</p>
+
+<h3 id="output-rotate">Rotate (Needle)</h3>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td class="field">Rotation Min/Max&deg;</td><td>The on-screen angle range the needle sweeps across Value Min-Max.</td></tr>
+  <tr><td class="field">Smoothing (seconds)</td><td>The needle eases toward a new reading over roughly this many seconds instead of snapping to it on every update - real analog needles have inertia. 0 disables smoothing for a gauge that should react instantly.</td></tr>
+  <tr><td class="field">Wobble Binding</td><td>Optional second state path (e.g. <code>sonar.pulse_hz</code>) that makes the needle shiver around its main position at a rate read from that value - one gauge then shows both an amplitude (where it points, from Value Binding) and a frequency (how fast it shivers, from Wobble Binding) at once.</td></tr>
+  <tr><td class="field">Wobble Amplitude&deg;</td><td>How many degrees the shiver swings.</td></tr>
+  <tr><td class="field">Wobble Speed Scale</td><td>Shrinks the real Hz value driving the shiver - a raw 0.5-3Hz sonar pulse rate would otherwise be too fast for a human eye to read as a rate; lower this further if it still reads too quick.</td></tr>
+</table>
+<div class="example">
+  <div class="example-title">Example: engine RPM gauge</div>
+  Value Binding = <code>engine.rpm_fraction</code>, Value Min/Max = 0/1,
+  Rotation Min/Max = -120&deg;/120&deg;, Smoothing = 0.25s so the needle
+  doesn't jitter with every tick.
+</div>
+<div class="example">
+  <div class="example-title">Example: sonar dB/pulse dial</div>
+  Value Binding = <code>sonar.db</code>, Value Min/Max = 0/100, Rotation
+  Min/Max = -60&deg;/60&deg;, Wobble Binding = <code>sonar.pulse_hz</code>,
+  Wobble Amplitude = 8&deg;, Wobble Speed Scale = 0.25 - the needle points at
+  loudness while shivering at a rate that reads as the contact's propeller
+  speed.
+</div>
+
+<h3 id="output-linear">Linear (Slider)</h3>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td class="field">Axis</td><td>Vertical or Horizontal travel direction.</td></tr>
+  <tr><td class="field">Travel Min/Max</td><td>How far the sprite physically slides on screen (canvas units) across Value Min-Max.</td></tr>
+</table>
+<div class="example">
+  <div class="example-title">Example</div>
+  A fuel gauge float: Value Binding = <code>engine.fuel</code>, Value
+  Min/Max = 0/100, Axis = Vertical, Travel Min/Max = 0/-40 (rising as fuel
+  increases).
+</div>
+
+<h3 id="output-texture">Texture Swap (Toggle)</h3>
+<p>
+  A binary on/off swap rather than a ranged value - shows the object's
+  normal texture when the bound value reads false/off, and <span class="field">Flipped
+  Texture</span> when it reads true/on. No Min/Max fields (there's nothing
+  to range over); the Preview control is a checkbox instead of a slider.
+</p>
+<div class="example">
+  <div class="example-title">Example</div>
+  A fuse status light: Value Binding = <code>engine.fuse_blown</code>,
+  Flipped Texture = the blown-fuse sprite.
+</div>
+
+<h2 id="visual-states">Visual States</h2>
+<p>
+  A more general mechanism than Texture Swap above: any number of named
+  states, each overriding sprite/color/rotation/opacity/visibility, selected
+  by matching a live bound value (coerced to a string) against each state's
+  name. Enable via <strong>Enable States</strong>, set <span class="field">State
+  Binding</span> to the state path to read, then <strong>+ Add State</strong>
+  for each named state a value can take.
+</p>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td class="field">Name</td><td>Must exactly match the live value once coerced to a string - e.g. name a state <code>true</code>/<code>false</code> for a boolean binding, <code>forward</code>/<code>neutral</code>/<code>reverse</code> for a gear string, or <code>2</code> for a number.</td></tr>
+  <tr><td class="field">Texture</td><td>Sprite shown in this state, or (none).</td></tr>
+  <tr><td class="field">Color</td><td>Fallback plain-color fill used whenever this state has no Texture picked - lets a state be just a color (e.g. an indicator light's empty/loaded/armed colors) without needing a texture asset at all.</td></tr>
+  <tr><td class="field">Rotation&deg;</td><td>Added on top of the object's own authored Rotation for this state only - lets a state reuse the exact same sprite turned to a different angle (e.g. a lever's "down" position as its "up" sprite rotated 180&deg;, or a switch's sideways position rotated 90&deg;) instead of needing a second texture asset.</td></tr>
+  <tr><td class="field">Opacity</td><td>0-1.</td></tr>
+  <tr><td class="field">Visible</td><td>Unchecking hides the object entirely while this state is active.</td></tr>
+  <tr><td class="field">Default</td><td>Which state is shown before any live value has resolved, and the fallback whenever the live value doesn't match any state's name.</td></tr>
+</table>
+<div class="example">
+  <div class="example-title">Example: reusing one sprite, rotated</div>
+  A two-position toggle lever with only one piece of art
+  (<code>lever.png</code>, drawn pointing up): add states named
+  <code>false</code> and <code>true</code>, both using
+  <code>lever.png</code> as their Texture, but give <code>true</code> a
+  Rotation of 180&deg; - the lever now visually flips down for its ON
+  reading without importing a second image.
+</div>
+<div class="example">
+  <div class="example-title">Example: hull damage progression</div>
+  States <code>NORMAL</code>, <code>DAMAGED</code>, <code>BROKEN</code>, each
+  with its own texture, State Binding pointing at whatever damage-level path
+  the server exposes for that panel.
+</div>
+
+<h2 id="toggle-switch">Toggle Switch Shortcut</h2>
+<p>
+  Appears once Interaction is set to Click. A packaged shortcut over Visual
+  States for the extremely common on/off-switch case - turning it on
+  automatically enables States with <code>true</code>/<code>false</code>
+  entries pre-created, so there's no need to separately visit the Visual
+  States section and get those names exactly right by hand.
+</p>
+<table>
+  <tr><th>Field</th><th>Meaning</th></tr>
+  <tr><td class="field">State Binding (boolean)</td><td>The live value that says which state (on/off) is currently active - also becomes the Visual States' State Binding.</td></tr>
+  <tr><td class="field">Same action turns it on and off</td><td>Checked (the default for a newly-enabled toggle): the Binding field above is used for both directions, sending its Payload Key as <code>true</code>/<code>false</code> - the common shape for something like <code>SET_ELECTRIC_MOTOR</code>'s <code>{ active: bool }</code>. Unchecked: ON and OFF are two separate actions with no payload (e.g. <code>START_ENGINE</code> / <code>STOP_ENGINE</code>), and an OFF Binding field appears for the second one.</td></tr>
+  <tr><td class="field">Default State</td><td>ON or OFF - which one this control starts showing / falls back to (the same underlying field as Visual States' Default).</td></tr>
+  <tr><td class="field">ON / OFF Texture</td><td>Optional distinct sprite per state, same as any other Visual State's Texture field.</td></tr>
+</table>
+<div class="example">
+  <div class="example-title">Example: single-action toggle</div>
+  An electric motor switch: Binding = <code>SET_ELECTRIC_MOTOR</code>, "Same
+  action turns it on and off" checked (Payload Key auto-fills to
+  <code>active</code>), State Binding = <code>electrical.electric_motor_active</code>,
+  Default State = OFF.
+</div>
+<div class="example">
+  <div class="example-title">Example: dual-action toggle</div>
+  A diesel engine start/stop switch: Binding = <code>START_ENGINE</code>,
+  "Same action turns it on and off" unchecked, OFF Binding =
+  <code>STOP_ENGINE</code>, State Binding = <code>engine.running</code>.
+</div>
+
+<h2 id="bindings">Bindings &amp; Payload Keys</h2>
+<p>
+  Three related-but-different text fields appear around the inspector, all
+  sharing the same autocomplete data:
+</p>
+<table>
+  <tr><th>Field</th><th>Direction</th><th>Meaning</th></tr>
+  <tr><td class="field">Binding</td><td>Editor &rarr; Server</td><td>The server action name sent when the control is clicked/dragged (e.g. <code>SET_RUDDER</code>, <code>FIRE_TORPEDO</code>).</td></tr>
+  <tr><td class="field">Value Binding / State Binding</td><td>Server &rarr; Editor</td><td>A dot-path read from the server's broadcast state to drive an Output or Visual State (e.g. <code>sonar.db</code>, <code>engine.running</code>, or an array index like <code>torpedo_tubes.0.state</code>).</td></tr>
+  <tr><td class="field">Payload Key</td><td>Editor &rarr; Server</td><td>Which JSON key the control's value is sent under - almost always <code>value</code> (left blank, since that's the server's own default key); picking a known Binding auto-fills this when the action expects something else (e.g. <code>SET_GEAR</code> needs <code>gear</code>, a boolean toggle needs <code>active</code>).</td></tr>
+  <tr><td class="field">Extra Payload Key / Value</td><td>Editor &rarr; Server</td><td>A SECOND, fixed field sent alongside Payload Key's own value - for an action needing two pieces of data at once, e.g. <code>SET_TUBE_ARMED</code>'s <code>{tube: 0, armed: true|false}</code>: Payload Key = <code>armed</code> (the control's own on/off), Extra Payload Key = <code>tube</code>, Extra Payload Value = <code>0</code> (constant for this one object - use a separate object per tube). A number-looking Extra Payload Value is sent as a number, otherwise as a string. Leave Extra Payload Key blank for anything that only needs the one Payload Key.</td></tr>
+</table>
+<p>
+  Both autocomplete lists come from <code>SERVER_ACTIONS</code> and
+  <code>SERVER_STATE_PATHS</code> in <code>server-bindings.js</code> - see
+  the <a href="binding-sheet.html">Binding Sheet</a> (also linked from the
+  top bar on every page, and from the editor's own toolbar) for the full,
+  filterable, always-current table. It's hand-transcribed from what
+  <code>server/simulation.gd</code> actually implements (<code>apply_input()</code>'s
+  match arms and <code>get_state()</code>'s broadcast shape), not guessed -
+  so wiring a control is "pick a real name from the list" instead of typing
+  a string and hoping it matches. Whenever the server adds, renames, or
+  reshapes an action or state field, that list needs a matching update or
+  autocomplete quietly falls out of sync with reality; the hint text under
+  the Binding field will say a typed name "isn't in the server's known
+  action list" if it can't find a match, which is a good sign the sheet
+  needs updating (or that the name has a typo).
+</p>
+<div class="example">
+  <div class="example-title">Example: arming one specific torpedo tube</div>
+  Four Toggle Switch objects, one per tube. Each one: Binding = <code>SET_TUBE_ARMED</code>,
+  Payload Key = <code>armed</code>, Extra Payload Key = <code>tube</code>,
+  Extra Payload Value = <code>0</code>/<code>1</code>/<code>2</code>/<code>3</code>
+  (matching that switch's own tube), State Binding = the matching
+  <code>torpedo_tubes.N.armed</code>.
+</div>
+
+<h2 id="prefabs">Prefabs</h2>
+<p>
+  <strong>Save as Prefab</strong> captures an object's <em>appearance
+  only</em> - type, width, height, color, sprite, pivot, uniform-scale flag
+  (and, for a Group, its children) - as a reusable template, and links this
+  instance to it. Name, position, interaction, and binding are never part of
+  a prefab and stay per-instance. Click a prefab's swatch in the PREFABS
+  list to place another linked instance anywhere. <strong>Push
+  Appearance</strong> updates the shared template from the currently
+  selected instance and propagates those appearance fields to every other
+  instance linked to the same prefab, across every room and station -
+  useful for "I fixed this switch's artwork, now fix it everywhere."
+  <strong>Unlink</strong> detaches an instance from its prefab so future
+  pushes stop affecting it.
+</p>
+<div class="example">
+  <div class="example-title">Example</div>
+  Build one "Standard Toggle Switch" object, Save as Prefab, then place five
+  instances (fuel pump, battery, radio, bilge pump, compressor), each given
+  its own Binding/Name/position. Later, swap in better switch artwork on any
+  one instance and Push Appearance to update all five at once - their
+  individual bindings are untouched.
+</div>
+
+<h2 id="backup">Project Backup &amp; the Assets Folder</h2>
+<p>
+  The editor autosaves to this browser's local storage as you work, but
+  that storage is not reliable long-term (it can silently drop asset image
+  data once its quota fills up, and it's tied to one browser profile).
+  <strong>Save Project Backup...</strong> downloads a complete snapshot -
+  every room, prefab, and asset's actual image data, with stable IDs - to a
+  file you control; <strong>Load Project Backup...</strong> restores
+  everything from one exactly as it was, with no risk of assets being
+  reassigned to the wrong images. Save one periodically, and especially
+  before closing the browser for an extended break.
+</p>
+<p>
+  Asset IDs are derived from each file's own relative path within the
+  assets folder (e.g. <code>switches/lever.png</code>), not from load order
+  - so reconnecting or rescanning the same assets folder always reproduces
+  the same IDs for the same files, and existing rooms' sprite references
+  don't break.
+</p>
+
+<h2 id="export">Export &amp; Import</h2>
+<p>
+  <strong>Export Room</strong> writes the current room's JSON (plus a packed
+  spritesheet PNG covering every asset it actually uses); <strong>Export All
+  Rooms</strong> does the same for every room at once, into a
+  <code>layouts/</code>-shaped bundle. Either downloads the files, or - once
+  you've used <strong>Choose Export Folder...</strong> (Chromium browsers
+  only) - writes straight into a chosen folder, e.g. the game client's own
+  <code>layouts/</code> directory, with no manual save-as step. <strong>Import
+  Room JSON</strong> loads a previously-exported room's JSON back in as a
+  starting point (note: it restores the room/object layout only, not asset
+  image data - re-scan or re-load the assets folder afterward if the
+  registry is empty).
+</p>
+
+<h2 id="validate">Validate</h2>
+<p>
+  Scans the current room's objects and reports problems before they reach
+  the game client: duplicate object IDs, an interactive object with no
+  Binding, a drag control with Min equal to Max, an Output with no Output
+  Binding (or, for a ranged output, Value Min equal to Value Max), a Texture
+  Swap output with no Flipped Texture chosen, and a Station Link spawn with
+  no target station picked. Run it before exporting a room you haven't
+  touched in a while.
+</p>
+
+<p class="top-link"><a href="#overview">&uarr; back to top</a></p>
+
+</main>
+</div>
+</body>
+</html>

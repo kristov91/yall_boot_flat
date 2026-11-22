@@ -1,0 +1,232 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Submarine Test</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<h1>COOPERATIVE SUBMARINE TEST</h1>
+
+<div id="game-over-banner" hidden>
+  SUBMARINE LOST
+  <div><button id="reset-btn-banner">Reset Game</button></div>
+</div>
+
+<div id="connect-bar">
+  <label>Server: ws://<input id="server-address" value="localhost:9000"></label>
+  <button id="connect-btn">Connect</button>
+  <button id="reset-btn">Reset Game</button>
+  <button id="invulnerable-btn">Invulnerable: OFF</button>
+  <button id="show-enemy-btn">Show Enemy Ships: OFF</button>
+  <button id="ignore-overheat-btn">Ignore Overheat/Efficiency: OFF</button>
+  <button id="unlimited-supplies-btn">Unlimited Supplies: OFF</button>
+  <button id="ignore-game-over-btn">Ignore Game Over: OFF</button>
+  <button id="mobile-panel-toggle">Show Debug Panel</button>
+  <button id="fullscreen-btn">Full Screen</button>
+</div>
+
+<div id="main-layout">
+<div id="viewport">
+  <table id="status">
+    <tr><td>Connection:</td><td id="connection-status">DISCONNECTED</td></tr>
+    <tr><td>Player ID:</td><td id="player-id">-</td></tr>
+    <tr><td>Server Tick:</td><td id="server-tick">-</td></tr>
+    <tr><td>Speed:</td><td id="speed">-</td></tr>
+    <tr><td>Heading:</td><td id="heading">-</td></tr>
+    <tr><td>Depth:</td><td id="depth">-</td></tr>
+    <tr><td>O2:</td><td id="o2">-</td></tr>
+    <tr><td>Flooding:</td><td id="flooding">-</td></tr>
+    <tr><td>Active Leaks:</td><td id="active-leaks">-</td></tr>
+  </table>
+
+  <div id="compartment-header">
+    <div id="compartment-name">Compartment: -</div>
+    <div id="nav-hint">(swipe left/right, or use arrow keys, to move between compartments - disabled while at a station)</div>
+    <div id="players-here">Players here: -</div>
+  </div>
+
+  <!-- COMPARTMENT VIEW: looking around the room. Stations are selectable;
+       tools are used directly here, per the design doc's explicit exception
+       for tools not requiring a station. -->
+  <div id="compartment-view">
+    <div class="section-title">STATIONS</div>
+    <div id="station-list" class="interactive"></div>
+
+    <div id="tool-rack">
+      <div class="section-title">TOOL RACK (this room)</div>
+      <div id="rack-tools" class="interactive"></div>
+      <div id="held-tool"></div>
+    </div>
+  </div>
+
+  <!-- STATION VIEWS: only one shown at a time, entered by selecting it from
+       the station list above. -->
+
+  <div class="station-view" data-station="station_helm" id="view-helm">
+    <button class="leave-station-btn interactive">&larr; Leave Station</button>
+    <div class="section-title">HELM</div>
+    <div id="helm-station-status" class="station-status">Helm: -</div>
+
+    <div id="helm-levers">
+      <div class="lever-block">
+        <div class="station-status">Engine Order</div>
+        <div class="lever-area">
+          <div class="lever-labels"><span>FULL</span><span>HALF</span><span>SLOW</span><span>STOP</span></div>
+          <div id="engine-rail" class="lever-rail interactive"><div id="engine-handle" class="lever-handle"></div></div>
+        </div>
+        <div id="engine-order-readout" class="lever-readout">Value: -</div>
+      </div>
+
+      <div class="lever-block">
+        <div class="station-status">Rudder</div>
+        <div class="lever-area">
+          <div class="lever-labels"><span>RIGHT</span><span></span><span></span><span>LEFT</span></div>
+          <div id="helm-rail" class="lever-rail interactive"><div id="helm-handle" class="lever-handle"></div></div>
+        </div>
+        <div id="helm-readout" class="lever-readout">Rudder: -</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="station-view" data-station="station_dive" id="view-dive">
+    <button class="leave-station-btn interactive">&larr; Leave Station</button>
+    <div class="section-title">DIVE</div>
+    <div class="lever-block">
+      <div id="dive-station-status" class="station-status">Dive: -</div>
+      <div class="lever-area">
+        <div class="lever-labels"><span>DIVE</span><span></span><span></span><span>RISE</span></div>
+        <div id="dive-rail" class="lever-rail interactive"><div id="dive-handle" class="lever-handle"></div></div>
+      </div>
+      <div id="dive-readout" class="lever-readout">Planes: -</div>
+    </div>
+  </div>
+
+  <div class="station-view" data-station="nav_map" id="view-nav-map">
+    <button class="leave-station-btn interactive">&larr; Leave Station</button>
+    <div class="section-title">NAVIGATION MAP</div>
+    <div id="nav-map-block">
+      <canvas id="nav-map" width="280" height="280"></canvas>
+      <div id="map-legend">Own ship: green. Grid: 25m. (Multiple players may use this station at once.)</div>
+      <button id="recenter-map-btn" class="interactive">Re-center Map</button>
+    </div>
+  </div>
+
+  <div class="station-view" data-station="station_sonar" id="view-sonar">
+    <button class="leave-station-btn interactive">&larr; Leave Station</button>
+    <div class="section-title">SONAR</div>
+    <div id="sonar-readout">No contact</div>
+    <div class="lever-block">
+      <div id="sonar-station-status" class="station-status">Sonar: -</div>
+      <div class="lever-area">
+        <div id="sonar-rail" class="lever-rail interactive horizontal"><div id="sonar-handle" class="lever-handle"></div></div>
+      </div>
+      <div id="sonar-dial-readout" class="lever-readout">Dial: -</div>
+    </div>
+  </div>
+
+  <div class="station-view" data-station="torpedo_tube" id="view-torpedo-tube">
+    <button class="leave-station-btn interactive">&larr; Leave Station</button>
+    <div class="section-title">TORPEDO DATA COMPUTER</div>
+
+    <div id="tdc-scope-block">
+      <canvas id="tdc-scope" width="280" height="280"></canvas>
+      <div id="tdc-scope-legend">Relative to bow (up = dead ahead). Bright track = armed tube.</div>
+    </div>
+
+    <div id="tube-list"></div>
+
+    <div id="tdc-dials">
+      <div class="lever-block">
+        <div class="station-status">Gyro Angle</div>
+        <div class="lever-area">
+          <div id="gyro-rail" class="lever-rail interactive horizontal"><div id="gyro-handle" class="lever-handle"></div></div>
+        </div>
+        <div id="gyro-readout" class="lever-readout">Gyro: -</div>
+      </div>
+
+      <div class="lever-block">
+        <div class="station-status">Spread</div>
+        <div class="lever-area">
+          <div id="spread-rail" class="lever-rail interactive horizontal"><div id="spread-handle" class="lever-handle"></div></div>
+        </div>
+        <div id="spread-readout" class="lever-readout">Spread: -</div>
+      </div>
+    </div>
+
+    <div id="torpedo-status">-</div>
+    <button id="fire-torpedo-btn" class="interactive">FIRE</button>
+  </div>
+
+  <div class="station-view" data-station="station_engine_controls" id="view-engine-controls">
+    <button class="leave-station-btn interactive">&larr; Leave Station</button>
+    <div class="section-title">ENGINE CONTROLS</div>
+    <div id="engine-ordered-readout">Ordered (from Control): -</div>
+    <div id="engine-running-status">STOPPED</div>
+
+    <div id="engine-buttons">
+      <button id="start-engine-btn" class="interactive">START</button>
+      <button id="stop-engine-btn" class="interactive">STOP</button>
+    </div>
+
+    <div id="gear-buttons">
+      <button class="gear-btn interactive" data-gear="reverse">REV</button>
+      <button class="gear-btn interactive" data-gear="neutral">NEUT</button>
+      <button class="gear-btn interactive" data-gear="forward">FWD</button>
+    </div>
+
+    <div id="engine-levers">
+      <div class="lever-block">
+        <div id="throttle-station-status" class="station-status">Throttle: -</div>
+        <div class="lever-area">
+          <div class="lever-labels"><span>FULL</span><span></span><span></span><span>IDLE</span></div>
+          <div id="throttle-rail" class="lever-rail interactive"><div id="throttle-handle" class="lever-handle"></div></div>
+        </div>
+        <div id="throttle-readout" class="lever-readout">Throttle: -</div>
+      </div>
+
+      <div class="lever-block">
+        <div id="coolant-station-status" class="station-status">Coolant: -</div>
+        <div class="lever-area">
+          <div class="lever-labels"><span>MAX</span><span></span><span></span><span>OFF</span></div>
+          <div id="coolant-rail" class="lever-rail interactive"><div id="coolant-handle" class="lever-handle"></div></div>
+        </div>
+        <div id="coolant-readout" class="lever-readout">Coolant: -</div>
+      </div>
+    </div>
+
+    <div id="engine-gauges">
+      <div>RPM: <span id="gauge-rpm">-</span></div>
+      <div>Temp: <span id="gauge-temp">-</span></div>
+      <div>Oil Pressure: <span id="gauge-oil">-</span></div>
+      <div>Fuel: <span id="gauge-fuel">-</span></div>
+      <div>Efficiency: <span id="gauge-efficiency">-</span></div>
+    </div>
+
+    <button id="tune-btn" class="interactive">HOLD TO TUNE</button>
+
+    <div id="fuse-block">
+      <span id="fuse-status">Fuse: OK</span>
+      <button id="replace-fuse-btn" class="interactive" hidden>Replace Fuse</button>
+    </div>
+  </div>
+
+  <!-- No server occupancy or controls wired up yet - room-renderer canvas
+       only, so the newly exported layout is visible while testing. -->
+  <div class="station-view" data-station="station_electrical" id="view-electrical">
+    <button class="leave-station-btn interactive">&larr; Leave Station</button>
+    <div class="section-title">ELECTRICAL</div>
+  </div>
+</div>
+
+<div id="room-canvas-panel">
+  <canvas id="room-canvas" width="960" height="540"></canvas>
+  <button id="welder-toggle-btn" class="interactive">Welder: OFF</button>
+</div>
+</div>
+
+<script src="room_renderer.js"></script>
+<script src="client.js"></script>
+</body>
+</html>
