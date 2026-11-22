@@ -78,14 +78,18 @@ const DT := 1.0 / 60.0
 @export var max_depth := 200.0
 
 @export_group("Ballast")
-## Ballast tanks, worked from the dive station's BLOW and FLOOD valves.
-## ballast is 0..100 (% of the tanks full of water); at ballast_neutral the
-## boat is neutrally buoyant and only the dive planes move it. Heavier than
-## neutral sinks, lighter rises, up to ballast_max_rate depth-units/sec at
-## completely full / empty tanks. Starts at neutral so a crew that never
-## touches the valves gets exactly the old planes-only handling.
+## The chain is: valves -> ballast -> buoyancy -> vertical motion.
+## The dive station's FLOOD and BLOW valves only fill / empty the ballast
+## tanks (ballast, 0..100 % full of water) - they never move the boat.
+## Ballast (plus any hull flooding) sets buoyancy: +1 tanks empty (rises),
+## 0 neutral at ballast_neutral, -1 tanks full (sinks). Buoyancy is what moves the boat: the vertical
+## rate eases toward buoyancy * buoyancy_max_rate (the hull has mass, so
+## it doesn't start/stop instantly), and the dive planes add on top.
+## Starts at neutral, so a crew that never touches the valves gets the old
+## planes-only handling.
 @export var ballast_neutral := 50.0
-@export var ballast_max_rate := 3.0 # depth-units/sec at 0% or 100% ballast
+@export var buoyancy_max_rate := 3.0 # depth-units/sec rise/sink at buoyancy +1/-1
+@export var buoyancy_response := 0.5 # how fast the vertical rate follows buoyancy (fraction per second)
 @export var ballast_flood_rate := 5.0 # %/sec ballast gained with FLOOD fully open
 @export var ballast_blow_rate := 8.0 # %/sec ballast pushed out with BLOW fully open (needs comp_air)
 @export var comp_air_use_rate := 4.0 # %/sec compressed air spent with BLOW fully open
@@ -329,6 +333,8 @@ var blow_valve: float = 0.0 # 0..1 opening, dive station BLOW valve
 var flood_valve: float = 0.0 # 0..1 opening, dive station FLOOD valve
 var ballast: float = 50.0 # 0..100, see the Ballast export group
 var comp_air: float = 100.0 # 0..100, spent by blowing ballast
+var buoyancy: float = 0.0 # -1 heavy (sinks) .. +1 light (rises), set by ballast
+var buoyancy_rate: float = 0.0 # depth-units/sec from buoyancy, + = deeper
 var depth: float = 0.0
 var sunk: bool = false
 ## The round's win condition: set once every cargo ship in every convoy has
@@ -482,6 +488,8 @@ func reset() -> void:
 	flood_valve = 0.0
 	ballast = ballast_neutral
 	comp_air = 100.0
+	buoyancy = 0.0
+	buoyancy_rate = 0.0
 	depth = 0.0
 	sunk = false
 	won = false
@@ -706,12 +714,14 @@ func step() -> void:
 	# weight of taken-on water that plain buoyancy no longer offsets - so
 	# heavy flooding drags the sub down even at full rise on the planes,
 	# and it can't just sit at the surface breathing while leaks this bad
-	# are still open.
+	# are still open. Blowing ballast (positive buoyancy) can fight it.
 	var flooding_sink := flooding_sink_rate * (flooding / 100.0)
 	_step_ballast()
-	var ballast_span := maxf(ballast_neutral, 100.0 - ballast_neutral)
-	var ballast_sink := ballast_max_rate * (ballast - ballast_neutral) / ballast_span
-	depth = clampf(depth + (dive_planes * max_dive_rate + flooding_sink + ballast_sink) * DT, 0.0, max_depth)
+	_step_buoyancy()
+	depth = clampf(depth + (dive_planes * max_dive_rate + flooding_sink + buoyancy_rate) * DT, 0.0, max_depth)
+	# Pinned at the surface or the bottom, the hull isn't actually moving.
+	if (depth <= 0.0 and buoyancy_rate < 0.0) or (depth >= max_depth and buoyancy_rate > 0.0):
+		buoyancy_rate = 0.0
 
 	_step_ships()
 	_step_sinking_ships()
@@ -733,6 +743,15 @@ func _step_ballast() -> void:
 	ballast = clampf(ballast, 0.0, 100.0)
 	if engine_running:
 		comp_air = minf(100.0, comp_air + comp_air_recharge_rate * DT)
+
+## Ballast -> buoyancy (-1 heavy .. +1 light), then buoyancy -> a vertical
+## rate (depth-units/sec, positive = deeper) that eases toward its target
+## instead of jumping, so trimming the boat takes a moment to show.
+func _step_buoyancy() -> void:
+	var ballast_span := maxf(ballast_neutral, 100.0 - ballast_neutral)
+	buoyancy = clampf((ballast_neutral - ballast) / ballast_span, -1.0, 1.0)
+	var target_rate := -buoyancy * buoyancy_max_rate
+	buoyancy_rate += (target_rate - buoyancy_rate) * minf(1.0, buoyancy_response * DT)
 
 func _cargo_ships() -> Array:
 	return ships.filter(func(s): return s.type == "cargo")
@@ -984,6 +1003,7 @@ func get_state() -> Dictionary:
 		"flood_valve": flood_valve,
 		"ballast": ballast,
 		"comp_air": comp_air,
+		"buoyancy": buoyancy,
 		"sonar_dial": sonar_dial,
 		"periscope": periscope,
 		"o2": o2,
