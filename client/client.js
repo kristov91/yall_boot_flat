@@ -1280,7 +1280,34 @@ const TUBE_STEP_LABELS = {
   flooding: 'FLOODING',
 };
 
+// Bottom-of-screen hint at the forward torpedo room's tube panel: each
+// tube's next step in the reload sequence (so a refused, out-of-order click
+// still tells the crew why), or a warning if the server is too old to know
+// about tube reloading at all (it then silently ignores these controls).
+function updateTubeHints(tubes) {
+  const box = el('tube-hints');
+  const show = currentStationIdForCanvas() === 'torpedo_tube' && Array.isArray(tubes);
+  box.hidden = !show;
+  if (!show) return;
+  let html;
+  if (tubes.length && tubes[0].step === undefined) {
+    html = '<span class="warn">Game server is out of date - restart it to use the torpedo room controls.</span>';
+  } else {
+    html = tubes.map((t, i) => {
+      const label = t.step === 'ready' ? 'READY'
+        : t.step === 'loading' ? `LOADING ${Math.round(t.load_progress * 100)}%`
+          : (TUBE_STEP_LABELS[t.step] || t.step);
+      return `<span class="${t.step === 'ready' ? 'ready' : ''}">Tube ${i + 1}: ${label}</span>`;
+    }).join('');
+  }
+  if (box.dataset.html !== html) {
+    box.innerHTML = html;
+    box.dataset.html = html;
+  }
+}
+
 function updateTorpedoUI(tdc, tubes) {
+  updateTubeHints(tubes);
   if (!tdc || !tubes) return;
 
   ensureTubeButtons(tubes.length);

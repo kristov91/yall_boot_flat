@@ -139,6 +139,36 @@ button:disabled {
   z-index: 15;
 }
 
+/* Forward torpedo room: what each tube needs next, so a refused click
+   (wrong order) is never silent. Shown only at the torpedo_tube station. */
+#tube-hints {
+  position: fixed;
+  left: 50%;
+  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
+  z-index: 15;
+  display: flex;
+  gap: 12px;
+  padding: 6px 12px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid #4caf50;
+  border-radius: 4px;
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+#tube-hints[hidden] {
+  display: none;
+}
+
+#tube-hints .ready {
+  color: #4caf50;
+}
+
+#tube-hints .warn {
+  color: #ff7043;
+}
+
 #welder-toggle-btn.active {
   background: #ffb300;
   color: #111;
