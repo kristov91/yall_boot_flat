@@ -3597,12 +3597,13 @@
             "payloadKey": "armed",
             "toggleEnabled": true,
             "statesEnabled": true,
-            "stateBinding": "",
+            "stateBinding": "torpedo_tubes.0.armed",
             "defaultVisualState": "false",
             "toggleSingleBinding": true,
             "toggleOffBinding": "SET_TUBE_ARMED",
             "extraPayloadKey": "tube",
-            "extraPayloadValue": 0
+            "extraPayloadValue": 0,
+            "toggleStateBinding": "torpedo_tubes.0.armed"
           },
           {
             "id": "switchred_4x_copy_1",
@@ -3661,12 +3662,13 @@
             "payloadKey": "armed",
             "toggleEnabled": true,
             "statesEnabled": true,
-            "stateBinding": "",
+            "stateBinding": "torpedo_tubes.1.armed",
             "defaultVisualState": "false",
             "toggleSingleBinding": true,
             "toggleOffBinding": "SET_TUBE_ARMED",
             "extraPayloadKey": "tube",
-            "extraPayloadValue": 1
+            "extraPayloadValue": 1,
+            "toggleStateBinding": "torpedo_tubes.1.armed"
           },
           {
             "id": "switchred_4x_copy_copy",
@@ -3725,12 +3727,13 @@
             "payloadKey": "armed",
             "toggleEnabled": true,
             "statesEnabled": true,
-            "stateBinding": "",
+            "stateBinding": "torpedo_tubes.2.armed",
             "defaultVisualState": "false",
             "toggleSingleBinding": true,
             "toggleOffBinding": "SET_TUBE_ARMED",
             "extraPayloadKey": "tube",
-            "extraPayloadValue": 2
+            "extraPayloadValue": 2,
+            "toggleStateBinding": "torpedo_tubes.2.armed"
           },
           {
             "id": "switchred_4x_copy_copy_copy",
@@ -3789,12 +3792,13 @@
             "payloadKey": "armed",
             "toggleEnabled": true,
             "statesEnabled": true,
-            "stateBinding": "",
+            "stateBinding": "torpedo_tubes.3.armed",
             "defaultVisualState": "false",
             "toggleSingleBinding": true,
             "toggleOffBinding": "SET_TUBE_ARMED",
             "extraPayloadKey": "tube",
-            "extraPayloadValue": 3
+            "extraPayloadValue": 3,
+            "toggleStateBinding": "torpedo_tubes.3.armed"
           },
           {
             "id": "bigred_4x",
