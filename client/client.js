@@ -1267,6 +1267,19 @@ function ensureTubeButtons(tubeCount) {
   tubeButtonsBuilt = true;
 }
 
+// What the torpedo room has to do next for a tube that isn't ready yet - see
+// _tube_next_step() in simulation.gd.
+const TUBE_STEP_LABELS = {
+  drain: 'DRAIN TUBE',
+  draining: 'DRAINING',
+  open_door: 'OPEN DOOR',
+  load: 'LOAD TORPEDO',
+  no_torpedoes: 'NO TORPEDOES',
+  close_door: 'CLOSE DOOR',
+  flood: 'FLOOD TUBE',
+  flooding: 'FLOODING',
+};
+
 function updateTorpedoUI(tdc, tubes) {
   if (!tdc || !tubes) return;
 
@@ -1277,21 +1290,25 @@ function updateTorpedoUI(tdc, tubes) {
     if (!block) return;
     const light = block.children[0];
     const btn = block.children[1];
-    btn.dataset.loaded = String(tube.loaded);
+    // "loaded" for arming purposes means READY: loaded, flooded and breech
+    // shut - the torpedo room's reload sequence has to be finished first.
+    btn.dataset.loaded = String(tube.ready);
     btn.dataset.armed = String(tube.armed);
-    btn.disabled = !tube.loaded && !tube.armed;
+    btn.disabled = !tube.ready && !tube.armed;
     btn.classList.toggle('armed', tube.armed);
 
-    const lightState = tube.armed ? 'armed' : (tube.loaded ? 'loaded' : 'empty');
+    const lightState = tube.armed ? 'armed' : (tube.ready ? 'loaded' : 'empty');
     light.classList.remove('empty', 'loaded', 'armed');
     light.classList.add(lightState);
 
     if (tube.armed) {
       btn.textContent = `Tube ${i + 1}: ARMED`;
-    } else if (tube.loaded) {
-      btn.textContent = `Tube ${i + 1}: LOADED`;
+    } else if (tube.ready) {
+      btn.textContent = `Tube ${i + 1}: READY`;
+    } else if (tube.loading) {
+      btn.textContent = `Tube ${i + 1}: LOADING ${Math.round(tube.load_progress * 100)}%`;
     } else {
-      btn.textContent = `Tube ${i + 1}: RELOAD ${Math.round(tube.reload_fraction * 100)}%`;
+      btn.textContent = `Tube ${i + 1}: ${TUBE_STEP_LABELS[tube.step] || tube.step}`;
     }
   });
 

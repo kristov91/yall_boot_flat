@@ -261,7 +261,6 @@ const DT := 1.0 / 60.0
 @export var torpedo_speed := 20.0
 @export var torpedo_hit_radius := 10.0
 @export var torpedo_max_lifetime_ticks := 3000 # 50 sec - together with torpedo_speed, this sets max range (world units traveled before it expires): 20 * 3000/60 = ~1000
-@export var torpedo_reload_ticks := 300 # 5 sec
 ## Degrees/sec a torpedo turns continuously once its gyro activates (see
 ## torpedo_gyro_activation_distance), at FULL gyro deflection (+/-
 ## tdc_gyro_limit) - it never stops turning on its own, so this is also the
@@ -287,6 +286,28 @@ const DT := 1.0 / 60.0
 @export var tdc_spread_limit := 45.0
 
 const TORPEDO_TUBE_COUNT := 4
+
+@export_group("Torpedo Tubes")
+## Reloading is crew work in the Forward Torpedo room, in this order:
+## drain the tube, open the breech door, load a torpedo, close the door,
+## flood the tube. Only a loaded, flooded tube with its breech door shut is
+## "ready", and only a ready tube can be armed and fired from the conning
+## tower. The outer (muzzle) door is assumed to open and close by itself at
+## the moment of firing - there is no control for it. A fired tube is left
+## empty and still flooded, so the crew has to drain it first. Wrong-order
+## actions are simply refused (see _tube_breech() / _set_tube_flood()).
+## Seconds to fill an empty tube with sea water (flood valve open).
+@export var tube_flood_seconds := 4.0
+## Seconds to drain a full tube (flood valve closed = draining).
+@export var tube_drain_seconds := 4.0
+## Seconds to slide a torpedo from the racks into an open tube.
+@export var tube_load_seconds := 6.0
+## Spare torpedoes in the racks at the start of a patrol (not counting the
+## four already in the tubes). Unlimited Supplies stops them being used up.
+@export var torpedo_reserve := 10
+## Water level (0..1) still counted as "drained" / "flooded", so the needle
+## doesn't have to sit exactly on the stop.
+const TUBE_WATER_EPSILON := 0.01
 
 @export_group("Periscope")
 ## Independent of Life Support's own o2_replenish_min_depth above even though
@@ -508,7 +529,8 @@ var convoys: Array = []
 ## salvo symmetrically around that aim instead of sending every torpedo down
 ## the same track - see _fire_torpedo() for the per-tube offset math.
 var tdc := {"gyro_angle": 0.0, "spread_angle": 0.0}
-var torpedo_tubes: Array = [] # each {loaded, armed, reload_ticks_remaining} - see reset()
+var torpedo_tubes: Array = [] # each {loaded, armed, water, flooding, door_open, load_progress} - see reset() and the Torpedo Tubes export group
+var torpedo_stock: int = 0 # spare torpedoes left in the racks
 var torpedoes: Array = [] # in-flight torpedoes, each {position, heading, target_heading, life_ticks} - see _fire_torpedo()/_step_torpedoes()
 var passive_contacts: Array = [] # each {radius, angle, position} - see _step_passive_contacts()
 
@@ -614,7 +636,15 @@ func reset() -> void:
 	tdc = {"gyro_angle": 0.0, "spread_angle": 0.0}
 	torpedo_tubes = []
 	for i in TORPEDO_TUBE_COUNT:
-		torpedo_tubes.append({"loaded": true, "armed": false, "reload_ticks_remaining": 0})
+		torpedo_tubes.append({
+			"loaded": true,
+			"armed": false,
+			"water": 1.0, # 0 = drained, 1 = flooded
+			"flooding": true, # flood valve: true fills the tube, false drains it
+			"door_open": false, # inner breech door
+			"load_progress": -1.0, # -1 = not loading, else 0..1 while a torpedo slides in
+		})
+	torpedo_stock = torpedo_reserve
 	torpedoes = []
 
 	for station: Dictionary in stations.values():
@@ -733,6 +763,12 @@ func apply_input(player_id: int, action: String, data: Dictionary) -> void:
 		"SET_TUBE_ARMED":
 			if not sunk:
 				_set_tube_armed(player_id, int(data.get("tube", -1)), bool(data.get("armed", false)))
+		"TUBE_BREECH":
+			if not sunk and _player_in_compartment(player_id, TORPEDO_COMPARTMENT):
+				_tube_breech(int(data.get("tube", -1)))
+		"SET_TUBE_FLOOD":
+			if not sunk and _player_in_compartment(player_id, TORPEDO_COMPARTMENT):
+				_set_tube_flood(int(data.get("tube", -1)), bool(data.get("flood", false)))
 		"MOVE_TO_COMPARTMENT":
 			_move_player(player_id, data.get("compartment", ""))
 		"PICKUP_TOOL":
@@ -1201,9 +1237,19 @@ func get_state() -> Dictionary:
 			# combine the two booleans above itself) so each tube can drive
 			# its own Indicator Light object via a plain State Binding like
 			# "torpedo_tubes.0.state" - one light per tube, each independent.
-			"state": "armed" if t.armed else ("loaded" if t.loaded else "empty"),
-			"reload_fraction": 0.0 if t.loaded else 1.0 - float(t.reload_ticks_remaining) / float(torpedo_reload_ticks),
+			# "loaded" here means READY to arm (loaded, flooded, breech
+			# shut), so the conning tower light only goes green once the
+			# torpedo room has finished the whole reload sequence.
+			"state": "armed" if t.armed else ("loaded" if _tube_ready(t) else "empty"),
+			"ready": _tube_ready(t),
+			"water": t.water,
+			"flooding": t.flooding,
+			"door_open": t.door_open,
+			"loading": t.load_progress >= 0.0,
+			"load_progress": maxf(t.load_progress, 0.0) if not t.loaded else 1.0,
+			"step": _tube_next_step(t),
 		}),
+		"torpedo_stock": torpedo_stock,
 		"torpedoes": torpedoes.map(func(t): return {
 			"bearing_relative": fposmod(rad_to_deg((t.position - position).angle()) - heading, 360.0),
 			"distance": t.position.distance_to(position),
@@ -1337,9 +1383,66 @@ func _set_tube_armed(player_id: int, tube_index: int, armed: bool) -> void:
 	if tube_index < 0 or tube_index >= torpedo_tubes.size():
 		return
 	var tube: Dictionary = torpedo_tubes[tube_index]
-	if armed and not tube.loaded:
+	if armed and not _tube_ready(tube):
 		return
 	tube.armed = armed
+
+func _tube_ready(tube: Dictionary) -> bool:
+	return tube.loaded and not tube.door_open and tube.water >= 1.0 - TUBE_WATER_EPSILON
+
+## What the torpedo room should do next to this tube - a hint for the UI.
+func _tube_next_step(tube: Dictionary) -> String:
+	if _tube_ready(tube):
+		return "ready"
+	if tube.load_progress >= 0.0:
+		return "loading"
+	if not tube.loaded:
+		if tube.door_open:
+			return "load" if (torpedo_stock > 0 or debug_unlimited_supplies) else "no_torpedoes"
+		if tube.water > TUBE_WATER_EPSILON:
+			return "draining" if not tube.flooding else "drain"
+		return "open_door"
+	if tube.door_open:
+		return "close_door"
+	return "flooding" if tube.flooding else "flood"
+
+## The breech door's handwheel. One control walks the door side of the
+## sequence: a shut door opens (only once the tube is drained); an open,
+## empty door starts loading a torpedo (or just shuts if the racks are
+## empty); an open, loaded door shuts. Anything
+## else (opening a wet tube, touching the door mid-load) is refused.
+func _tube_breech(tube_index: int) -> void:
+	if tube_index < 0 or tube_index >= torpedo_tubes.size():
+		return
+	var tube: Dictionary = torpedo_tubes[tube_index]
+	if tube.load_progress >= 0.0:
+		return
+	if not tube.door_open:
+		if tube.water > TUBE_WATER_EPSILON or tube.flooding:
+			return
+		tube.door_open = true
+		tube.armed = false
+	elif not tube.loaded:
+		if torpedo_stock <= 0 and not debug_unlimited_supplies:
+			tube.door_open = false # racks are empty - just shut it again
+			return
+		if not debug_unlimited_supplies:
+			torpedo_stock -= 1
+		tube.load_progress = 0.0
+	else:
+		tube.door_open = false
+
+## The tube's flood valve: true lets sea water in, false drains it. Flooding
+## is refused while the breech door is open (it would flood the room).
+func _set_tube_flood(tube_index: int, flood: bool) -> void:
+	if tube_index < 0 or tube_index >= torpedo_tubes.size():
+		return
+	var tube: Dictionary = torpedo_tubes[tube_index]
+	if flood and tube.door_open:
+		return
+	tube.flooding = flood
+	if not flood:
+		tube.armed = false
 
 ## Fires every currently-armed, loaded tube at once. Each tube's gyro offset
 ## is spread symmetrically around the TDC's aimed gyro_angle - with
@@ -1356,7 +1459,7 @@ func _fire_torpedo(player_id: int) -> void:
 	var tube_count := torpedo_tubes.size()
 	for i in tube_count:
 		var tube: Dictionary = torpedo_tubes[i]
-		if not tube.armed or not tube.loaded:
+		if not tube.armed or not _tube_ready(tube):
 			continue
 		var gyro_offset: float = tdc.gyro_angle + tdc.spread_angle * (float(i) - float(tube_count - 1) / 2.0)
 		torpedoes.append({
@@ -1367,7 +1470,6 @@ func _fire_torpedo(player_id: int) -> void:
 		})
 		tube.loaded = false
 		tube.armed = false
-		tube.reload_ticks_remaining = torpedo_reload_ticks
 
 func _replace_fuse(player_id: int) -> void:
 	if not players.has(player_id):
@@ -1645,9 +1747,14 @@ func _step_torpedoes() -> void:
 	torpedoes = still_flying
 
 	for tube in torpedo_tubes:
-		if not tube.loaded:
-			tube.reload_ticks_remaining -= 1
-			if tube.reload_ticks_remaining <= 0:
+		if tube.flooding:
+			tube.water = minf(1.0, tube.water + DT / maxf(tube_flood_seconds, 0.001))
+		else:
+			tube.water = maxf(0.0, tube.water - DT / maxf(tube_drain_seconds, 0.001))
+		if tube.load_progress >= 0.0:
+			tube.load_progress += DT / maxf(tube_load_seconds, 0.001)
+			if tube.load_progress >= 1.0:
+				tube.load_progress = -1.0
 				tube.loaded = true
 
 ## A new leak at a random spot in a random hull compartment (see

@@ -53,6 +53,14 @@ const SERVER_ACTIONS = [
     name: 'SET_TUBE_ARMED', payloadKey: 'armed', valueType: 'bool',
     note: 'Takes TWO payload keys (tube: int, armed: bool) - use Payload Key = armed for the control\'s own on/off, plus Extra Payload Key = tube / Extra Payload Value = <that tube\'s index> (a fixed per-instance value, e.g. one Toggle Switch object per tube) to supply the second field. See Help & Docs -> Bindings & Payload Keys.',
   },
+  {
+    name: 'TUBE_BREECH', payloadKey: '', valueType: 'trigger',
+    note: 'Forward Torpedo room breech door handwheel, one click control per tube (Extra Payload Key = tube, Extra Payload Value = index). Walks the door side of the reload: shut -> open (only once the tube is drained), open + empty -> load a torpedo from the racks, open + loaded -> shut. Wrong-order clicks are refused.',
+  },
+  {
+    name: 'SET_TUBE_FLOOD', payloadKey: 'flood', valueType: 'bool',
+    note: 'Forward Torpedo room flood valve per tube (Extra Payload Key = tube). true floods, false drains. Flooding is refused while the breech door is open. State Binding torpedo_tubes.N.flooding.',
+  },
 ];
 
 const SERVER_STATE_PATHS = [
@@ -111,7 +119,14 @@ const SERVER_STATE_PATHS = [
   { path: 'torpedo_tubes.3.state', type: 'string', options: ['empty', 'loaded', 'armed'] },
   { path: 'torpedo_tubes.0.loaded', type: 'bool', note: 'Same underlying data as .state, unpacked - use this instead if a control only needs one boolean rather than the 3-way state. Same array shape - .1.loaded, .2.loaded, .3.loaded also exist.' },
   { path: 'torpedo_tubes.0.armed', type: 'bool' },
-  { path: 'torpedo_tubes.0.reload_fraction', type: 'float', min: 0, max: 1, note: 'For a reload progress meter - 0 right after firing, 1 once loaded again.' },
+  { path: 'torpedo_tubes.0.ready', type: 'bool', note: 'Loaded, flooded and breech door shut - the only state the conning tower can arm. .state "loaded" means this too.' },
+  { path: 'torpedo_tubes.0.water', type: 'float', min: 0, max: 1, note: 'Tube water level, 0 drained .. 1 flooded - for the torpedo room needle gauges.' },
+  { path: 'torpedo_tubes.0.flooding', type: 'bool', note: 'Flood valve: true fills the tube, false drains it. State Binding for the SET_TUBE_FLOOD switch.' },
+  { path: 'torpedo_tubes.0.door_open', type: 'bool', note: 'Inner breech door open.' },
+  { path: 'torpedo_tubes.0.loading', type: 'bool' },
+  { path: 'torpedo_tubes.0.load_progress', type: 'float', min: 0, max: 1, note: 'Torpedo sliding in - 1 once loaded.' },
+  { path: 'torpedo_tubes.0.step', type: 'string', options: ['ready', 'drain', 'draining', 'open_door', 'load', 'loading', 'no_torpedoes', 'close_door', 'flood', 'flooding'], note: 'What the torpedo room has to do next for this tube.' },
+  { path: 'torpedo_stock', type: 'int', note: 'Spare torpedoes left in the racks.' },
   { path: 'engine.ordered', type: 'float', min: -1, max: 1 },
   { path: 'engine.running', type: 'bool' },
   { path: 'engine.throttle', type: 'float', min: 0, max: 1 },

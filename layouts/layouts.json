@@ -138,12 +138,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "TUBE_BREECH",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -155,8 +155,30 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_controls_tubedoor2_4x",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_controls_tubedoor2_4x",
+                "rotationOffset": 0,
+                "opacity": 0.35,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 1,
+            "toggleEnabled": false,
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.1.door_open",
+            "defaultVisualState": "false"
           },
           {
             "id": "tubedoor2_4x",
@@ -174,12 +196,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "TUBE_BREECH",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -191,8 +213,30 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_controls_tubedoor2_4x",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_controls_tubedoor2_4x",
+                "rotationOffset": 0,
+                "opacity": 0.35,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 0,
+            "toggleEnabled": false,
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.0.door_open",
+            "defaultVisualState": "false"
           },
           {
             "id": "tubedoor2_4x_copy_copy",
@@ -210,12 +254,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "TUBE_BREECH",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -227,8 +271,30 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_controls_tubedoor2_4x",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_controls_tubedoor2_4x",
+                "rotationOffset": 0,
+                "opacity": 0.35,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 3,
+            "toggleEnabled": false,
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.3.door_open",
+            "defaultVisualState": "false"
           },
           {
             "id": "tubedoor2_4x_copy",
@@ -246,12 +312,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "TUBE_BREECH",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -263,8 +329,30 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_controls_tubedoor2_4x",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_controls_tubedoor2_4x",
+                "rotationOffset": 0,
+                "opacity": 0.35,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 2,
+            "toggleEnabled": false,
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.2.door_open",
+            "defaultVisualState": "false"
           },
           {
             "id": "valve_4x",
@@ -282,12 +370,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "TUBE_BREECH",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -299,8 +387,30 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_108",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_108",
+                "rotationOffset": 90,
+                "opacity": 0.6,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 0,
+            "toggleEnabled": false,
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.0.door_open",
+            "defaultVisualState": "false"
           },
           {
             "id": "valve_4x_copy",
@@ -318,12 +428,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "TUBE_BREECH",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -335,8 +445,30 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_108",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_108",
+                "rotationOffset": 90,
+                "opacity": 0.6,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 1,
+            "toggleEnabled": false,
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.1.door_open",
+            "defaultVisualState": "false"
           },
           {
             "id": "valve_4x_copy_copy",
@@ -354,12 +486,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "TUBE_BREECH",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -371,8 +503,30 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_108",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_108",
+                "rotationOffset": 90,
+                "opacity": 0.6,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 3,
+            "toggleEnabled": false,
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.3.door_open",
+            "defaultVisualState": "false"
           },
           {
             "id": "valve_4x_copy_copy_copy",
@@ -390,12 +544,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "TUBE_BREECH",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -407,8 +561,30 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_108",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_108",
+                "rotationOffset": 90,
+                "opacity": 0.6,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 2,
+            "toggleEnabled": false,
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.2.door_open",
+            "defaultVisualState": "false"
           },
           {
             "id": "toggle1_4x",
@@ -426,12 +602,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "SET_TUBE_FLOOD",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -443,8 +619,33 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_98",
+                "rotationOffset": 180,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_98",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "flood",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 0,
+            "toggleEnabled": true,
+            "toggleSingleBinding": true,
+            "toggleOffBinding": "SET_TUBE_FLOOD",
+            "toggleStateBinding": "torpedo_tubes.0.flooding",
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.0.flooding",
+            "defaultVisualState": "true"
           },
           {
             "id": "toggle1_4x_copy",
@@ -462,12 +663,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "SET_TUBE_FLOOD",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -479,8 +680,33 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_98",
+                "rotationOffset": 180,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_98",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "flood",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 1,
+            "toggleEnabled": true,
+            "toggleSingleBinding": true,
+            "toggleOffBinding": "SET_TUBE_FLOOD",
+            "toggleStateBinding": "torpedo_tubes.1.flooding",
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.1.flooding",
+            "defaultVisualState": "true"
           },
           {
             "id": "toggle1_4x_copy_copy",
@@ -498,12 +724,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "SET_TUBE_FLOOD",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -515,8 +741,33 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_98",
+                "rotationOffset": 180,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_98",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "flood",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 2,
+            "toggleEnabled": true,
+            "toggleSingleBinding": true,
+            "toggleOffBinding": "SET_TUBE_FLOOD",
+            "toggleStateBinding": "torpedo_tubes.2.flooding",
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.2.flooding",
+            "defaultVisualState": "true"
           },
           {
             "id": "toggle1_4x_copy_copy_copy",
@@ -534,12 +785,12 @@
             "previewShape": "rectangle",
             "pivotX": 0.5,
             "pivotY": 0.5,
-            "interaction": "none",
+            "interaction": "click",
             "axis": "vertical",
             "min": 0,
             "max": 1,
             "reverse": false,
-            "binding": "",
+            "binding": "SET_TUBE_FLOOD",
             "targetStationId": "",
             "notes": "",
             "outputType": "none",
@@ -551,8 +802,33 @@
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
-            "visualStates": [],
-            "uniformScale": true
+            "visualStates": [
+              {
+                "name": "false",
+                "assetId": "asset_98",
+                "rotationOffset": 180,
+                "opacity": 1,
+                "visible": true
+              },
+              {
+                "name": "true",
+                "assetId": "asset_98",
+                "rotationOffset": 0,
+                "opacity": 1,
+                "visible": true
+              }
+            ],
+            "uniformScale": true,
+            "payloadKey": "flood",
+            "extraPayloadKey": "tube",
+            "extraPayloadValue": 3,
+            "toggleEnabled": true,
+            "toggleSingleBinding": true,
+            "toggleOffBinding": "SET_TUBE_FLOOD",
+            "toggleStateBinding": "torpedo_tubes.3.flooding",
+            "statesEnabled": true,
+            "stateBinding": "torpedo_tubes.3.flooding",
+            "defaultVisualState": "true"
           },
           {
             "id": "needle12_4x",
@@ -578,12 +854,12 @@
             "binding": "",
             "targetStationId": "",
             "notes": "",
-            "outputType": "none",
-            "outputBinding": "",
+            "outputType": "rotate",
+            "outputBinding": "torpedo_tubes.0.water",
             "outputMin": 0,
             "outputMax": 1,
-            "outputRotationMin": -45,
-            "outputRotationMax": 45,
+            "outputRotationMin": -125,
+            "outputRotationMax": 90,
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
@@ -614,12 +890,12 @@
             "binding": "",
             "targetStationId": "",
             "notes": "",
-            "outputType": "none",
-            "outputBinding": "",
+            "outputType": "rotate",
+            "outputBinding": "torpedo_tubes.1.water",
             "outputMin": 0,
             "outputMax": 1,
-            "outputRotationMin": -45,
-            "outputRotationMax": 45,
+            "outputRotationMin": -125,
+            "outputRotationMax": 90,
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
@@ -650,12 +926,12 @@
             "binding": "",
             "targetStationId": "",
             "notes": "",
-            "outputType": "none",
-            "outputBinding": "",
+            "outputType": "rotate",
+            "outputBinding": "torpedo_tubes.2.water",
             "outputMin": 0,
             "outputMax": 1,
-            "outputRotationMin": -45,
-            "outputRotationMax": 45,
+            "outputRotationMin": -125,
+            "outputRotationMax": 90,
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
@@ -686,12 +962,12 @@
             "binding": "",
             "targetStationId": "",
             "notes": "",
-            "outputType": "none",
-            "outputBinding": "",
+            "outputType": "rotate",
+            "outputBinding": "torpedo_tubes.3.water",
             "outputMin": 0,
             "outputMax": 1,
-            "outputRotationMin": -45,
-            "outputRotationMax": 45,
+            "outputRotationMin": -125,
+            "outputRotationMax": 90,
             "outputAxis": "vertical",
             "outputTravelMin": 0,
             "outputTravelMax": 0,
